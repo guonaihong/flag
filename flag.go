@@ -71,6 +71,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -193,6 +194,27 @@ func (s *stringValue) Set(val string) error {
 func (s *stringValue) Get() interface{} { return string(*s) }
 
 func (s *stringValue) String() string { return string(*s) }
+
+// -- string slice value
+type stringSliceValue []string
+
+func newStringSliceValue(val []string, p *[]string) *stringSliceValue {
+	*p = val
+	return (*stringSliceValue)(p)
+}
+
+func (s *stringSliceValue) Set(val string) error {
+	*s = append(*s, val)
+	return nil
+}
+
+func (s *stringSliceValue) Get() interface{} {
+	return []string(*s)
+}
+
+func (s *stringSliceValue) String() string {
+	return "[" + strings.Join(*s, ",") + "]"
+}
 
 // -- float64 Value
 type float64Value float64
@@ -714,6 +736,28 @@ func (f *FlagSet) String(name string, value string, usage string) *string {
 // The return value is the address of a string variable that stores the value of the flag.
 func String(name string, value string, usage string) *string {
 	return CommandLine.String(name, value, usage)
+}
+
+//TODO
+func (f *FlagSet) StringSliceVar(p *[]string, name string, value []string, usage string) {
+	f.Var(newStringSliceValue(value, p), name, usage)
+}
+
+//TODO
+func StringSliceVar(p *[]string, name string, value []string, usage string) {
+	CommandLine.Var(newStringSliceValue(value, p), name, usage)
+}
+
+//TODO
+func (f *FlagSet) StringSlice(name string, value []string, usage string) *[]string {
+	p := new([]string)
+	f.StringSliceVar(p, name, value, usage)
+	return p
+}
+
+//TODO
+func StringSlice(name string, value []string, usage string) *[]string {
+	return CommandLine.StringSlice(name, value, usage)
 }
 
 // Float64Var defines a float64 flag with specified name, default value, and usage string.
