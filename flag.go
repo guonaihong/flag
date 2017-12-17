@@ -64,6 +64,7 @@
 package flag
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -106,6 +107,61 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
+// -- bool slice value
+type boolSliceValue []bool
+
+func newBoolSliceValue(val []bool, p *[]bool) *boolSliceValue {
+	*p = val
+	return (*boolSliceValue)(p)
+}
+
+func (b *boolSliceValue) Set(val string) error {
+	var bv boolValue
+
+	err := bv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*b = append(*b, bool(bv))
+	return nil
+}
+
+func (b *boolSliceValue) Get() interface{} {
+	return []bool(*b)
+}
+
+func (b *boolSliceValue) String() string {
+
+	switch len(*b) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%t]", (*b)[0])
+	case 2:
+		return fmt.Sprintf("[%t, %t]", (*b)[0], (*b)[1])
+	case 3:
+		return fmt.Sprintf("[%t, %t, %t]", (*b)[0], (*b)[1], (*b)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *b {
+		buf.WriteString((*boolValue)(&v).String())
+		if k != len(*b) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
+
+func (s *boolSliceValue) IsBoolFlag() bool { return true }
+
 // -- int Value
 type intValue int
 
@@ -123,6 +179,59 @@ func (i *intValue) Set(s string) error {
 func (i *intValue) Get() interface{} { return int(*i) }
 
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+
+// -- int slice value
+type intSliceValue []int
+
+func newIntSliceValue(val []int, p *[]int) *intSliceValue {
+	*p = val
+	return (*intSliceValue)(p)
+}
+
+func (i *intSliceValue) Set(val string) error {
+
+	var iv intValue
+
+	err := iv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*i = append(*i, int(iv))
+	return nil
+}
+
+func (i *intSliceValue) Get() interface{} {
+	return []int(*i)
+}
+
+func (i *intSliceValue) String() string {
+	switch len(*i) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%d]", (*i)[0])
+	case 2:
+		return fmt.Sprintf("[%d, %d]", (*i)[0], (*i)[1])
+	case 3:
+		return fmt.Sprintf("[%d, %d, %d]", (*i)[0], (*i)[1], (*i)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *i {
+		buf.WriteString((*intValue)(&v).String())
+		if k != len(*i) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
 
 // -- int64 Value
 type int64Value int64
@@ -142,6 +251,58 @@ func (i *int64Value) Get() interface{} { return int64(*i) }
 
 func (i *int64Value) String() string { return strconv.FormatInt(int64(*i), 10) }
 
+// -- int64 slice value
+type int64SliceValue []int64
+
+func newInt64SliceValue(val []int64, p *[]int64) *int64SliceValue {
+	*p = val
+	return (*int64SliceValue)(p)
+}
+
+func (i *int64SliceValue) Set(val string) error {
+	var iv int64Value
+
+	err := iv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*i = append(*i, int64(iv))
+	return nil
+}
+
+func (i *int64SliceValue) Get() interface{} {
+	return []int64(*i)
+}
+
+func (i *int64SliceValue) String() string {
+	switch len(*i) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%d]", (*i)[0])
+	case 2:
+		return fmt.Sprintf("[%d, %d]", (*i)[0], (*i)[1])
+	case 3:
+		return fmt.Sprintf("[%d, %d, %d]", (*i)[0], (*i)[1], (*i)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *i {
+		buf.WriteString((*int64Value)(&v).String())
+		if k != len(*i) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
+
 // -- uint Value
 type uintValue uint
 
@@ -160,6 +321,58 @@ func (i *uintValue) Get() interface{} { return uint(*i) }
 
 func (i *uintValue) String() string { return strconv.FormatUint(uint64(*i), 10) }
 
+// -- uint slice value
+type uintSliceValue []uint
+
+func newUintSliceValue(val []uint, p *[]uint) *uintSliceValue {
+	*p = val
+	return (*uintSliceValue)(p)
+}
+
+func (i *uintSliceValue) Set(val string) error {
+	var uv uintValue
+
+	err := uv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*i = append(*i, uint(uv))
+	return nil
+}
+
+func (i *uintSliceValue) Get() interface{} {
+	return []uint(*i)
+}
+
+func (i *uintSliceValue) String() string {
+	switch len(*i) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%u]", (*i)[0])
+	case 2:
+		return fmt.Sprintf("[%u, %u]", (*i)[0], (*i)[1])
+	case 3:
+		return fmt.Sprintf("[%u, %u, %u]", (*i)[0], (*i)[1], (*i)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *i {
+		buf.WriteString((*uintValue)(&v).String())
+		if k != len(*i) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
+
 // -- uint64 Value
 type uint64Value uint64
 
@@ -177,6 +390,58 @@ func (i *uint64Value) Set(s string) error {
 func (i *uint64Value) Get() interface{} { return uint64(*i) }
 
 func (i *uint64Value) String() string { return strconv.FormatUint(uint64(*i), 10) }
+
+// -- uint64 slice value
+type uint64SliceValue []uint64
+
+func newUint64SliceValue(val []uint64, p *[]uint64) *uint64SliceValue {
+	*p = val
+	return (*uint64SliceValue)(p)
+}
+
+func (i *uint64SliceValue) Set(val string) error {
+	var uv uint64Value
+
+	err := uv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*i = append(*i, uint64(uv))
+	return nil
+}
+
+func (s *uint64SliceValue) Get() interface{} {
+	return []uint64(*s)
+}
+
+func (i *uint64SliceValue) String() string {
+	switch len(*i) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%u]", (*i)[0])
+	case 2:
+		return fmt.Sprintf("[%u, %u]", (*i)[0], (*i)[1])
+	case 3:
+		return fmt.Sprintf("[%u, %u, %u]", (*i)[0], (*i)[1], (*i)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *i {
+		buf.WriteString((*uint64Value)(&v).String())
+		if k != len(*i) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
 
 // -- string Value
 type stringValue string
@@ -234,6 +499,58 @@ func (f *float64Value) Get() interface{} { return float64(*f) }
 
 func (f *float64Value) String() string { return strconv.FormatFloat(float64(*f), 'g', -1, 64) }
 
+// -- float64 slice value
+type float64SliceValue []float64
+
+func newFloat64SliceValue(val []float64, p *[]float64) *float64SliceValue {
+	*p = val
+	return (*float64SliceValue)(p)
+}
+
+func (f *float64SliceValue) Set(val string) error {
+	var fv float64Value
+
+	err := fv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*f = append(*f, float64(fv))
+	return nil
+}
+
+func (f *float64SliceValue) Get() interface{} {
+	return []float64(*f)
+}
+
+func (f *float64SliceValue) String() string {
+	switch len(*f) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%f]", (*f)[0])
+	case 2:
+		return fmt.Sprintf("[%f, %f]", (*f)[0], (*f)[1])
+	case 3:
+		return fmt.Sprintf("[%f, %f, %f]", (*f)[0], (*f)[1], (*f)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *f {
+		buf.WriteString((*float64Value)(&v).String())
+		if k != len(*f) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
+
 // -- time.Duration Value
 type durationValue time.Duration
 
@@ -251,6 +568,58 @@ func (d *durationValue) Set(s string) error {
 func (d *durationValue) Get() interface{} { return time.Duration(*d) }
 
 func (d *durationValue) String() string { return (*time.Duration)(d).String() }
+
+// -- duration slice value
+type durationSliceValue []time.Duration
+
+func newDurationSliceValue(val []time.Duration, p *[]time.Duration) *durationSliceValue {
+	*p = val
+	return (*durationSliceValue)(p)
+}
+
+func (d *durationSliceValue) Set(val string) error {
+	var dv durationValue
+
+	err := dv.Set(val)
+	if err != nil {
+		return err
+	}
+
+	*d = append(*d, time.Duration(dv))
+	return nil
+}
+
+func (d *durationSliceValue) Get() interface{} {
+	return []time.Duration(*d)
+}
+
+func (d *durationSliceValue) String() string {
+	switch len(*d) {
+	case 0:
+		return "[]"
+	case 1:
+		return fmt.Sprintf("[%s]", (*d)[0])
+	case 2:
+		return fmt.Sprintf("[%s, %s]", (*d)[0], (*d)[1])
+	case 3:
+		return fmt.Sprintf("[%s, %s, %s]", (*d)[0], (*d)[1], (*d)[2])
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString("[")
+
+	for k, v := range *d {
+		buf.WriteString((*durationValue)(&v).String())
+		if k != len(*d) {
+			buf.WriteString(",")
+		}
+	}
+
+	buf.WriteString("]")
+
+	return buf.String()
+}
 
 // Value is the interface to the dynamic value stored in a flag.
 // (The default value is represented as a string.)
@@ -608,6 +977,32 @@ func Bool(name string, value bool, usage string) *bool {
 	return CommandLine.Bool(name, value, usage)
 }
 
+// BoolSliceVar defines a bool flag with specified name, default value, and usage string.
+// The argument p points to a bool slice variable in which to store the value of the flag.
+func (f *FlagSet) BoolSliceVar(p *[]bool, name string, value []bool, usage string) {
+	f.Var(newBoolSliceValue(value, p), name, usage)
+}
+
+// BoolSliceVar defines a bool flag with specified name, default value, and usage string.
+// The argument p points to a bool slice variable in which to store the value of the flag.
+func BoolSliceVar(p *[]bool, name string, value []bool, usage string) {
+	CommandLine.Var(newBoolSliceValue(value, p), name, usage)
+}
+
+// BoolSlice defines a bool flag with specified name, default value, and usage string.
+// The return value is the address of a bool slice variable that stores the value of the flag.
+func (f *FlagSet) BoolSlice(name string, value []bool, usage string) *[]bool {
+	p := new([]bool)
+	f.BoolSliceVar(p, name, value, usage)
+	return p
+}
+
+// BoolSlice defines a bool flag with specified name, default value, and usage string.
+// The return value is the address of a bool slice variable that stores the value of the flag.
+func BoolSlice(name string, value []bool, usage string) *[]bool {
+	return CommandLine.BoolSlice(name, value, usage)
+}
+
 // IntVar defines an int flag with specified name, default value, and usage string.
 // The argument p points to an int variable in which to store the value of the flag.
 func (f *FlagSet) IntVar(p *int, name string, value int, usage string) {
@@ -632,6 +1027,32 @@ func (f *FlagSet) Int(name string, value int, usage string) *int {
 // The return value is the address of an int variable that stores the value of the flag.
 func Int(name string, value int, usage string) *int {
 	return CommandLine.Int(name, value, usage)
+}
+
+// IntSliceVar defines an int flag with specified name, default value, and usage string.
+// The argument p points to an int slice variable in which to store the value of the flag.
+func (f *FlagSet) IntSliceVar(p *[]int, name string, value []int, usage string) {
+	f.Var(newIntSliceValue(value, p), name, usage)
+}
+
+// IntSliceVar defines an int flag with specified name, default value, and usage string.
+// The argument p points to an int slice variable in which to store the value of the flag.
+func IntSliceVar(p *[]int, name string, value []int, usage string) {
+	CommandLine.Var(newIntSliceValue(value, p), name, usage)
+}
+
+// IntSlice defines an int flag with specified name, default value, and usage string.
+// The return value is the address of an int slice variable that stores the value of the flag.
+func (f *FlagSet) IntSlice(name string, value []int, usage string) *[]int {
+	p := new([]int)
+	f.IntSliceVar(p, name, value, usage)
+	return p
+}
+
+// IntSlice defines an int flag with specified name, default value, and usage string.
+// The return value is the address of an int slice variable that stores the value of the flag.
+func IntSlice(name string, value []int, usage string) *[]int {
+	return CommandLine.IntSlice(name, value, usage)
 }
 
 // Int64Var defines an int64 flag with specified name, default value, and usage string.
@@ -660,6 +1081,32 @@ func Int64(name string, value int64, usage string) *int64 {
 	return CommandLine.Int64(name, value, usage)
 }
 
+// Int64SliceVar defines an int64 flag with specified name, default value, and usage string.
+// The argument p points to an int64 slice variable in which to store the value of the flag.
+func (f *FlagSet) Int64SliceVar(p *[]int64, name string, value []int64, usage string) {
+	f.Var(newInt64SliceValue(value, p), name, usage)
+}
+
+// Int64SliceVar defines an int64 flag with specified name, default value, and usage string.
+// The argument p points to an int64 slice variable in which to store the value of the flag.
+func Int64SliceVar(p *[]int64, name string, value []int64, usage string) {
+	CommandLine.Var(newInt64SliceValue(value, p), name, usage)
+}
+
+// Int64Slice defines an int64 flag with specified name, default value, and usage string.
+// The return value is the address of an int64 slice variable that stores the value of the flag.
+func (f *FlagSet) Int64Slice(name string, value []int64, usage string) *[]int64 {
+	p := new([]int64)
+	f.Int64SliceVar(p, name, value, usage)
+	return p
+}
+
+// Int64Slice defines an int64 flag with specified name, default value, and usage string.
+// The return value is the address of an int64 slice variable that stores the value of the flag.
+func Int64Slice(name string, value []int64, usage string) *[]int64 {
+	return CommandLine.Int64Slice(name, value, usage)
+}
+
 // UintVar defines a uint flag with specified name, default value, and usage string.
 // The argument p points to a uint variable in which to store the value of the flag.
 func (f *FlagSet) UintVar(p *uint, name string, value uint, usage string) {
@@ -684,6 +1131,32 @@ func (f *FlagSet) Uint(name string, value uint, usage string) *uint {
 // The return value is the address of a uint  variable that stores the value of the flag.
 func Uint(name string, value uint, usage string) *uint {
 	return CommandLine.Uint(name, value, usage)
+}
+
+// UintSliceVar defines a uint flag with specified name, default value, and usage string.
+// The argument p points to a uint slice variable in which to store the value of the flag.
+func (f *FlagSet) UintSliceVar(p *[]uint, name string, value []uint, usage string) {
+	f.Var(newUintSliceValue(value, p), name, usage)
+}
+
+// UintSliceVar defines a uint flag with specified name, default value, and usage string.
+// The argument p points to a uint slice variable in which to store the value of the flag.
+func UintSliceVar(p *[]uint, name string, value []uint, usage string) {
+	CommandLine.Var(newUintSliceValue(value, p), name, usage)
+}
+
+// UintSlice defines a uint flag with specified name, default value, and usage string.
+// The return value is the address of a uint slice variable that stores the value of the flag.
+func (f *FlagSet) UintSlice(name string, value []uint, usage string) *[]uint {
+	p := new([]uint)
+	f.UintSliceVar(p, name, value, usage)
+	return p
+}
+
+// UintSlice defines a uint flag with specified name, default value, and usage string.
+// The return value is the address of a uint slice variable that stores the value of the flag.
+func UintSlice(name string, value []uint, usage string) *[]uint {
+	return CommandLine.UintSlice(name, value, usage)
 }
 
 // Uint64Var defines a uint64 flag with specified name, default value, and usage string.
@@ -712,6 +1185,32 @@ func Uint64(name string, value uint64, usage string) *uint64 {
 	return CommandLine.Uint64(name, value, usage)
 }
 
+// Uint64SliceVar defines a uint64 flag with specified name, default value, and usage string.
+// The argument p points to a uint64 slice variable in which to store the value of the flag.
+func (f *FlagSet) Uint64SliceVar(p *[]uint64, name string, value []uint64, usage string) {
+	f.Var(newUint64SliceValue(value, p), name, usage)
+}
+
+// Uint64SliceVar defines a uint64 flag with specified name, default value, and usage string.
+// The argument p points to a uint64 slice variable in which to store the value of the flag.
+func Uint64SliceVar(p *[]uint64, name string, value []uint64, usage string) {
+	CommandLine.Var(newUint64SliceValue(value, p), name, usage)
+}
+
+// Uint64Slice defines a uint64 flag with specified name, default value, and usage string.
+// The return value is the address of a uint64 slice variable that stores the value of the flag.
+func (f *FlagSet) Uint64Slice(name string, value []uint64, usage string) *[]uint64 {
+	p := new([]uint64)
+	f.Uint64SliceVar(p, name, value, usage)
+	return p
+}
+
+// Uint64Slice defines a uint64 flag with specified name, default value, and usage string.
+// The return value is the address of a uint64 slice variable that stores the value of the flag.
+func Uint64Slice(name string, value []uint64, usage string) *[]uint64 {
+	return CommandLine.Uint64Slice(name, value, usage)
+}
+
 // StringVar defines a string flag with specified name, default value, and usage string.
 // The argument p points to a string variable in which to store the value of the flag.
 func (f *FlagSet) StringVar(p *string, name string, value string, usage string) {
@@ -738,24 +1237,28 @@ func String(name string, value string, usage string) *string {
 	return CommandLine.String(name, value, usage)
 }
 
-//TODO
+// StringSliceVar defines a string flag with specified name, default value, and usage string.
+// The argument p points to a string slice variable in which to store the value of the flag.
 func (f *FlagSet) StringSliceVar(p *[]string, name string, value []string, usage string) {
 	f.Var(newStringSliceValue(value, p), name, usage)
 }
 
-//TODO
+// StringSliceVar defines a string flag with specified name, default value, and usage string.
+// The argument p points to a string slice variable in which to store the value of the flag.
 func StringSliceVar(p *[]string, name string, value []string, usage string) {
 	CommandLine.Var(newStringSliceValue(value, p), name, usage)
 }
 
-//TODO
+// StringSlice defines a string flag with specified name, default value, and usage string.
+// The return value is the address of a string slice variable that stores the value of the flag.
 func (f *FlagSet) StringSlice(name string, value []string, usage string) *[]string {
 	p := new([]string)
 	f.StringSliceVar(p, name, value, usage)
 	return p
 }
 
-//TODO
+// StringSlice defines a string flag with specified name, default value, and usage string.
+// The return value is the address of a string slice variable that stores the value of the flag.
 func StringSlice(name string, value []string, usage string) *[]string {
 	return CommandLine.StringSlice(name, value, usage)
 }
@@ -786,6 +1289,32 @@ func Float64(name string, value float64, usage string) *float64 {
 	return CommandLine.Float64(name, value, usage)
 }
 
+// Float64SliceVar defines a float64 flag with specified name, default value, and usage string.
+// The argument p points to a float64 slice variable in which to store the value of the flag.
+func (f *FlagSet) Float64SliceVar(p *[]float64, name string, value []float64, usage string) {
+	f.Var(newFloat64SliceValue(value, p), name, usage)
+}
+
+// Float64SliceVar defines a float64 flag with specified name, default value, and usage string.
+// The argument p points to a float64 slice variable in which to store the value of the flag.
+func Float64SliceVar(p *[]float64, name string, value []float64, usage string) {
+	CommandLine.Var(newFloat64SliceValue(value, p), name, usage)
+}
+
+// Float64Slice defines a float64 flag with specified name, default value, and usage string.
+// The return value is the address of a float64 slice variable that stores the value of the flag.
+func (f *FlagSet) Float64Slice(name string, value []float64, usage string) *[]float64 {
+	p := new([]float64)
+	f.Float64SliceVar(p, name, value, usage)
+	return p
+}
+
+// Float64Slice defines a float64 flag with specified name, default value, and usage string.
+// The return value is the address of a float64 slice variable that stores the value of the flag.
+func Float64Slice(name string, value []float64, usage string) *[]float64 {
+	return CommandLine.Float64Slice(name, value, usage)
+}
+
 // DurationVar defines a time.Duration flag with specified name, default value, and usage string.
 // The argument p points to a time.Duration variable in which to store the value of the flag.
 // The flag accepts a value acceptable to time.ParseDuration.
@@ -814,6 +1343,36 @@ func (f *FlagSet) Duration(name string, value time.Duration, usage string) *time
 // The flag accepts a value acceptable to time.ParseDuration.
 func Duration(name string, value time.Duration, usage string) *time.Duration {
 	return CommandLine.Duration(name, value, usage)
+}
+
+// DurationSliceVar defines a time.Duration flag with specified name, default value, and usage string.
+// The argument p points to a time.Duration slice variable in which to store the value of the flag.
+// The flag accepts a value acceptable to time.ParseDuration.
+func (f *FlagSet) DurationSliceVar(p *[]time.Duration, name string, value []time.Duration, usage string) {
+	f.Var(newDurationSliceValue(value, p), name, usage)
+}
+
+// DurationSliceVar defines a time.Duration flag with specified name, default value, and usage string.
+// The argument p points to a time.Duration slice variable in which to store the value of the flag.
+// The flag accepts a value acceptable to time.ParseDuration.
+func DurationSliceVar(p *[]time.Duration, name string, value []time.Duration, usage string) {
+	CommandLine.Var(newDurationSliceValue(value, p), name, usage)
+}
+
+// DurationSlice defines a time.Duration flag with specified name, default value, and usage string.
+// The return value is the address of a time.Duration slice variable that stores the value of the flag.
+// The flag accepts a value acceptable to time.ParseDuration.
+func (f *FlagSet) DurationSlice(name string, value []time.Duration, usage string) *[]time.Duration {
+	p := new([]time.Duration)
+	f.DurationSliceVar(p, name, value, usage)
+	return p
+}
+
+// DurationSlice defines a time.Duration flag with specified name, default value, and usage string.
+// The return value is the address of a time.Duration slice variable that stores the value of the flag.
+// The flag accepts a value acceptable to time.ParseDuration.
+func DurationSlice(name string, value []time.Duration, usage string) *[]time.Duration {
+	return CommandLine.DurationSlice(name, value, usage)
 }
 
 // Var defines a flag with the specified name and usage string. The type and
