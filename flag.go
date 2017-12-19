@@ -150,7 +150,7 @@ func (b *boolSliceValue) String() string {
 
 	for k, v := range *b {
 		buf.WriteString((*boolValue)(&v).String())
-		if k != len(*b) {
+		if k != len(*b)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -223,7 +223,7 @@ func (i *intSliceValue) String() string {
 
 	for k, v := range *i {
 		buf.WriteString((*intValue)(&v).String())
-		if k != len(*i) {
+		if k != len(*i)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -293,7 +293,7 @@ func (i *int64SliceValue) String() string {
 
 	for k, v := range *i {
 		buf.WriteString((*int64Value)(&v).String())
-		if k != len(*i) {
+		if k != len(*i)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -363,7 +363,7 @@ func (i *uintSliceValue) String() string {
 
 	for k, v := range *i {
 		buf.WriteString((*uintValue)(&v).String())
-		if k != len(*i) {
+		if k != len(*i)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -433,7 +433,7 @@ func (i *uint64SliceValue) String() string {
 
 	for k, v := range *i {
 		buf.WriteString((*uint64Value)(&v).String())
-		if k != len(*i) {
+		if k != len(*i)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -541,7 +541,7 @@ func (f *float64SliceValue) String() string {
 
 	for k, v := range *f {
 		buf.WriteString((*float64Value)(&v).String())
-		if k != len(*f) {
+		if k != len(*f)-1 {
 			buf.WriteString(",")
 		}
 	}
@@ -611,7 +611,7 @@ func (d *durationSliceValue) String() string {
 
 	for k, v := range *d {
 		buf.WriteString((*durationValue)(&v).String())
-		if k != len(*d) {
+		if k != len(*d)-1 {
 			buf.WriteString(",")
 		}
 	}
