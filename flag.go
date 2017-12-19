@@ -825,14 +825,24 @@ func UnquoteUsage(flag *Flag) (name string, usage string) {
 		name = ""
 	case *durationValue:
 		name = "duration"
+	case *durationSliceValue:
+		name = "duration[]"
 	case *float64Value:
 		name = "float"
+	case *float64SliceValue:
+		name = "float[]"
 	case *intValue, *int64Value:
 		name = "int"
+	case *intSliceValue, *int64SliceValue:
+		name = "int[]"
 	case *stringValue:
 		name = "string"
+	case *stringSliceValue:
+		name = "string[]"
 	case *uintValue, *uint64Value:
 		name = "uint"
+	case *uintSliceValue, *uint64SliceValue:
+		name = "uint[]"
 	}
 	return
 }
