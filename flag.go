@@ -670,6 +670,7 @@ type FlagSet struct {
 	parsed        bool
 	actual        map[string]*Flag
 	formal        map[string]*Flag
+	formal2       map[string]*Flag
 	args          []string // arguments after flags
 	errorHandling ErrorHandling
 	output        io.Writer // nil means stderr; use out() accessor
@@ -863,7 +864,8 @@ func UnquoteUsage(flag *Flag) (name string, usage string) {
 // documentation for the global function PrintDefaults for more information.
 func (f *FlagSet) PrintDefaults() {
 	f.VisitAll(func(flag *Flag) {
-		s := fmt.Sprintf("  -%s", flag.Name) // Two spaces before -; see next two comments.
+		name := strings.Replace(flag.Name, ", ", ", --", -1)
+		s := fmt.Sprintf("  -%s", name) // Two spaces before -; see next two comments.
 		name, usage := UnquoteUsage(flag)
 		if len(name) > 0 {
 			s += " " + name
@@ -1401,6 +1403,24 @@ func DurationSlice(name string, value []time.Duration, usage string) *[]time.Dur
 	return CommandLine.DurationSlice(name, value, usage)
 }
 
+func newName(name string) (string, []string, bool) {
+	pos := strings.Index(name, ",")
+	if pos == -1 {
+		return name, nil, false
+	}
+
+	names := strings.Split(name, ",")
+	for k, _ := range names {
+		names[k] = strings.TrimSpace(names[k])
+	}
+
+	sort.Slice(names, func(i, j int) bool {
+		return len(names[i]) < len(names[j])
+	})
+
+	return strings.Join(names, ", "), names, true
+}
+
 // Var defines a flag with the specified name and usage string. The type and
 // value of the flag are represented by the first argument, of type Value, which
 // typically holds a user-defined implementation of Value. For instance, the
@@ -1409,7 +1429,16 @@ func DurationSlice(name string, value []time.Duration, usage string) *[]time.Dur
 // decompose the comma-separated string into the slice.
 func (f *FlagSet) Var(value Value, name string, usage string) {
 	// Remember the default value as a string; it won't change.
+	name, names, ok := newName(name)
 	flag := &Flag{name, usage, value, value.String()}
+	if ok {
+		if f.formal2 == nil {
+			f.formal2 = make(map[string]*Flag)
+		}
+		for _, v := range names {
+			f.formal2[v] = &Flag{v, usage, value, value.String()}
+		}
+	}
 	_, alreadythere := f.formal[name]
 	if alreadythere {
 		var msg string
@@ -1424,6 +1453,7 @@ func (f *FlagSet) Var(value Value, name string, usage string) {
 	if f.formal == nil {
 		f.formal = make(map[string]*Flag)
 	}
+
 	f.formal[name] = flag
 }
 
@@ -1493,11 +1523,14 @@ func (f *FlagSet) parseOne() (bool, error) {
 	m := f.formal
 	flag, alreadythere := m[name] // BUG
 	if !alreadythere {
-		if name == "help" || name == "h" { // special case for nice help message.
-			f.usage()
-			return false, ErrHelp
+		flag, alreadythere = f.formal2[name]
+		if !alreadythere {
+			if name == "help" || name == "h" { // special case for nice help message.
+				f.usage()
+				return false, ErrHelp
+			}
+			return false, f.failf("flag provided but not defined: -%s", name)
 		}
-		return false, f.failf("flag provided but not defined: -%s", name)
 	}
 
 	if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
