@@ -1,7 +1,8 @@
 #### 简介
 flag库基于go标准库修改而来，最近经常写些命令行工具，发现flag库不能满足我的需求，
 扩展了下，此项目存放这些私有修改
-
+#### 演示
+![flag](./flag.gif)
 #### 功能
 * flag库的所有功能
 * 在所有的flag.type()基础上增加flag.typeSlice函数(其中的type可以是String, int等)
