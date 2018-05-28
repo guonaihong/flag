@@ -27,15 +27,18 @@ func main() {
 }
 
 ```
-输出
 
-* typeSlice，和多别名示例
+运行demo code
+* 注意看-H 和 --header都被收集到h slice里面
 ```shell
 env GOPATH=`pwd` go run main.go -H "appkey:123" -H "User-Agent: main" --header "Accept: */*" -f file -file file2
+```
+* 输出结果
+```shell
 output-->  h/header([]string{"appkey:123", "User-Agent: main", "Accept: */*"}), f/file("file2"), op()
 ```
 
-* help 输出
+* help 输出效果
 ```shell
 env GOPATH=`pwd` go run main.go -h
 Usage of /tmp/go-build520917535/command-line-arguments/_obj/exe/main:
