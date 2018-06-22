@@ -667,6 +667,8 @@ type FlagSet struct {
 	Usage func()
 
 	name          string
+	version       string
+	author        string
 	parsed        bool
 	actual        map[string]*Flag
 	formal        map[string]*Flag
@@ -916,8 +918,26 @@ func PrintDefaults() {
 	CommandLine.PrintDefaults()
 }
 
+func (f *FlagSet) printVersionAuthor() {
+	if f.version != "" {
+		name := f.name
+		if name != "" {
+			name += " "
+		}
+
+		fmt.Fprintf(f.Output(), "%s%s\n", name, f.version)
+	}
+
+	if f.author != "" {
+		fmt.Fprintf(f.Output(), "%s\n\n", f.author)
+	}
+}
+
 // defaultUsage is the default function to print a usage message.
 func (f *FlagSet) defaultUsage() {
+
+	f.printVersionAuthor()
+
 	if f.name == "" {
 		fmt.Fprintf(f.Output(), "Usage:\n")
 	} else {
@@ -940,6 +960,7 @@ func (f *FlagSet) defaultUsage() {
 // happens anyway as the command line's error handling strategy is set to
 // ExitOnError.
 var Usage = func() {
+	CommandLine.printVersionAuthor()
 	fmt.Fprintf(CommandLine.Output(), "Usage of %s:\n", os.Args[0])
 	PrintDefaults()
 }
@@ -1634,6 +1655,26 @@ func NewFlagSet(name string, errorHandling ErrorHandling) *FlagSet {
 	}
 	f.Usage = f.defaultUsage
 	return f
+}
+
+//
+//
+func (f *FlagSet) Version(version string) {
+	f.version = version
+}
+
+//
+//
+func Version(version string) {
+	CommandLine.Version(version)
+}
+
+func (f *FlagSet) Author(author string) {
+	f.author = author
+}
+
+func Author(author string) {
+	CommandLine.Author(author)
 }
 
 // Init sets the name and error handling property for a flag set.
