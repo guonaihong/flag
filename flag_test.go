@@ -6,8 +6,8 @@ package flag_test
 
 import (
 	"bytes"
-	. "flag"
 	"fmt"
+	. "github.com/guonaihong/flag"
 	"io"
 	"os"
 	"sort"
@@ -25,7 +25,6 @@ func boolString(s string) string {
 }
 
 func TestEverything(t *testing.T) {
-	ResetForTesting(nil)
 	Bool("test_bool", false, "bool value")
 	Int("test_int", 0, "int value")
 	Int64("test_int64", 0, "int64 value")
@@ -95,7 +94,6 @@ func TestEverything(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	ResetForTesting(nil)
 	Bool("test_bool", true, "bool value")
 	Int("test_int", 1, "int value")
 	Int64("test_int64", 2, "int64 value")
@@ -140,7 +138,6 @@ func TestGet(t *testing.T) {
 
 func TestUsage(t *testing.T) {
 	called := false
-	ResetForTesting(func() { called = true })
 	if CommandLine.Parse([]string{"-x"}) == nil {
 		t.Error("parse did not fail for unknown flag")
 	}
@@ -216,7 +213,6 @@ func testParse(f *FlagSet, t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	ResetForTesting(func() { t.Error("bad parse") })
 	testParse(CommandLine, t)
 }
 
@@ -256,7 +252,6 @@ func TestUserDefined(t *testing.T) {
 func TestUserDefinedForCommandLine(t *testing.T) {
 	const help = "HELP"
 	var result string
-	ResetForTesting(func() { result = help })
 	Usage()
 	if result != help {
 		t.Fatalf("got %q; expected %q", result, help)
@@ -318,7 +313,6 @@ func TestSetOutput(t *testing.T) {
 // This tests that one can reset the flags. This still works but not well, and is
 // superseded by FlagSet.
 func TestChangingArgs(t *testing.T) {
-	ResetForTesting(func() { t.Fatal("bad parse") })
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()
 	os.Args = []string{"cmd", "-before", "subcmd", "-after", "args"}
@@ -431,7 +425,6 @@ func TestIntFlagOverflow(t *testing.T) {
 	if strconv.IntSize != 32 {
 		return
 	}
-	ResetForTesting(nil)
 	Int("i", 0, "")
 	Uint("u", 0, "")
 	if err := Set("i", "2147483648"); err == nil {
@@ -444,7 +437,6 @@ func TestIntFlagOverflow(t *testing.T) {
 
 // Issue 20998: Usage should respect CommandLine.output.
 func TestUsageOutput(t *testing.T) {
-	ResetForTesting(DefaultUsage)
 	var buf bytes.Buffer
 	CommandLine.SetOutput(&buf)
 	defer func(old []string) { os.Args = old }(os.Args)

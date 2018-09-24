@@ -1,11 +1,11 @@
 package flag
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
 	"sort"
+	"strings"
 )
 
 type ParentCommand struct {
@@ -14,6 +14,7 @@ type ParentCommand struct {
 	output     io.Writer
 	subCommand map[string]*subCommand
 	args       []string
+	maxName    int
 }
 
 type subCommand struct {
@@ -58,7 +59,7 @@ func (p *ParentCommand) PrintDefaults() {
 
 		name := sub.Name
 		if len(name) > 0 {
-			name = "    " + name + "    " + sub.Usage
+			name = "    " + name + "    " + strings.Repeat(" ", p.maxName-len(name)) + sub.Usage
 		}
 
 		fmt.Fprint(p.Output(), name, "\n")
@@ -100,6 +101,10 @@ func (p *ParentCommand) SubCommand(name string, usage string, subProcess func())
 		fmt.Fprintln(p.Output(), msg)
 
 		panic(msg)
+	}
+
+	if p.maxName < len(name) {
+		p.maxName = len(name)
 	}
 
 	p.subCommand[name] = &subCommand{Name: name, Usage: usage, SubProcess: subProcess}
@@ -167,20 +172,3 @@ func (p *ParentCommand) Parse(arguments []string) error {
 	}
 	return nil
 }
-
-/*
-func main() {
-
-	parent := NewParentCommand(os.Args[0])
-
-	parent.SubCommand("add", "添加文件内容至索引", func() {
-		fmt.Printf("call add subcommand")
-	})
-
-	parent.SubCommand("mv", "移动或重命名一个文件、目录或符号链接", func() {
-		fmt.Printf("call mv subcommand")
-	})
-
-	parent.Parse(os.Args[1:])
-}
-*/
