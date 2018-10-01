@@ -120,7 +120,9 @@ func (p *ParentCommand) SubCommand(name string, usage string, subProcess func())
 		for k, _ := range names {
 			names[k] = strings.TrimSpace(names[k])
 		}
-		sort.Strings(names)
+		sort.Slice(names, func(i, j int) bool {
+			return len(names[i]) < len(names[j])
+		})
 		name = strings.Join(names, ", ")
 	}
 
