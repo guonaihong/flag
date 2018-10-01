@@ -9,12 +9,13 @@ import (
 )
 
 type ParentCommand struct {
-	Usage      func()
-	name       string
-	output     io.Writer
-	subCommand map[string]*subCommand
-	args       []string
-	maxName    int
+	Usage       func()
+	name        string
+	output      io.Writer
+	subCommand  map[string]*subCommand
+	subCommand2 map[string]*subCommand
+	args        []string
+	maxName     int
 }
 
 type subCommand struct {
@@ -30,6 +31,7 @@ func NewParentCommand(name string) *ParentCommand {
 
 	p.Usage = p.defaultUsage
 	p.subCommand = make(map[string]*subCommand, 3)
+	p.subCommand2 = make(map[string]*subCommand, 3)
 
 	return p
 }
@@ -89,8 +91,8 @@ func (p *ParentCommand) SetOutput(output io.Writer) {
 	p.output = output
 }
 
-func (p *ParentCommand) SubCommand(name string, usage string, subProcess func()) {
-	_, alreadythere := p.subCommand[name]
+func (p *ParentCommand) saveSubCommand(sub map[string]*subCommand, name string, usage string, subProcess func()) {
+	_, alreadythere := sub[name]
 	if alreadythere {
 		msg := ""
 		if p.name == "" {
@@ -107,7 +109,26 @@ func (p *ParentCommand) SubCommand(name string, usage string, subProcess func())
 		p.maxName = len(name)
 	}
 
-	p.subCommand[name] = &subCommand{Name: name, Usage: usage, SubProcess: subProcess}
+	sub[name] = &subCommand{Name: name, Usage: usage, SubProcess: subProcess}
+}
+
+func (p *ParentCommand) SubCommand(name string, usage string, subProcess func()) {
+
+	names := strings.Split(name, ",")
+
+	if len(names) > 1 {
+		for k, _ := range names {
+			names[k] = strings.TrimSpace(names[k])
+		}
+		sort.Strings(names)
+		name = strings.Join(names, ", ")
+	}
+
+	p.saveSubCommand(p.subCommand, name, usage, subProcess)
+
+	for _, name := range names {
+		p.saveSubCommand(p.subCommand2, name, usage, subProcess)
+	}
 }
 
 func (p *ParentCommand) Args() []string { return p.args }
@@ -145,7 +166,10 @@ func (p *ParentCommand) parseOne() (bool, error) {
 			return false, ErrHelp
 		}
 
-		return false, p.failf("subcommand provided but not defined: -%s", name)
+		sub, alreadythere = p.subCommand2[name]
+		if !alreadythere {
+			return false, p.failf("subcommand provided but not defined: -%s", name)
+		}
 	}
 
 	p.args = p.args[1:]
