@@ -29,8 +29,7 @@ func main() {
 
 ```
 
-运行demo code
-* 注意看-H 和 --header都被收集到h slice里面
+* 注意看-H 和 --header都被收集到go里面slice类型变量里面(下面是运行demo code的命令)
 ```shell
 env GOPATH=`pwd` go run main.go -H "appkey:123" -H "User-Agent: main" --header "Accept: */*" -f file -file file2
 ```
