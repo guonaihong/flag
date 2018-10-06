@@ -30,16 +30,16 @@ func main() {
 ```
 
 * 注意看-H 和 --header都被收集到go里面slice类型变量里面(下面是运行demo code的命令)
-```shell
+```console
 env GOPATH=`pwd` go run main.go -H "appkey:123" -H "User-Agent: main" --header "Accept: */*" -f file -file file2
 ```
 * 输出结果
-```shell
+```console
 output-->  h/header([]string{"appkey:123", "User-Agent: main", "Accept: */*"}), f/file("file2"), op()
 ```
 
 * help 输出效果
-```shell
+```console
 env GOPATH=`pwd` go run main.go -h
 Usage of /tmp/go-build520917535/command-line-arguments/_obj/exe/main:
   -H, --header string[]
