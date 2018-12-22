@@ -674,6 +674,7 @@ type FlagSet struct {
 	formal        map[string]*Flag
 	formal2       map[string]*Flag
 	args          []string // arguments after flags
+	unkownArgs    []string // Unresolvable parameters
 	errorHandling ErrorHandling
 	output        io.Writer // nil means stderr; use out() accessor
 }
@@ -1513,8 +1514,14 @@ func (f *FlagSet) parseOne() (bool, error) {
 		return false, nil
 	}
 	s := f.args[0]
-	if len(s) < 2 || s[0] != '-' {
+	if len(s) < 2 {
 		return false, nil
+	}
+
+	if s[0] != '-' {
+		f.unkownArgs = append(f.unkownArgs, s)
+		f.args = f.args[1:]
+		return true, nil
 	}
 	numMinuses := 1
 	if s[1] == '-' {
@@ -1598,6 +1605,7 @@ func (f *FlagSet) Parse(arguments []string) error {
 			continue
 		}
 		if err == nil {
+			f.args = f.unkownArgs
 			break
 		}
 		switch f.errorHandling {
