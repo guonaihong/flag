@@ -1037,7 +1037,9 @@ func (f *FlagSet) parseOne() (bool, error) {
 	}
 	s := f.args[0]
 	if len(s) < 2 {
-		return false, nil
+		f.unkownArgs = append(f.unkownArgs, s)
+		f.args = f.args[1:]
+		return true, nil
 	}
 
 	if s[0] != '-' {
@@ -1121,13 +1123,15 @@ func (f *FlagSet) parseOne() (bool, error) {
 func (f *FlagSet) Parse(arguments []string) error {
 	f.parsed = true
 	f.args = arguments
+
+	defer func() { f.args = append(f.unkownArgs, f.args...) }()
+
 	for {
 		seen, err := f.parseOne()
 		if seen {
 			continue
 		}
 		if err == nil {
-			f.args = f.unkownArgs
 			break
 		}
 		switch f.errorHandling {
