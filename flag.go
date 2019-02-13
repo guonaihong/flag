@@ -197,27 +197,6 @@ func (s *stringValue) Get() interface{} { return string(*s) }
 
 func (s *stringValue) String() string { return string(*s) }
 
-// -- string slice value
-type stringSliceValue []string
-
-func newStringSliceValue(val []string, p *[]string) *stringSliceValue {
-	*p = val
-	return (*stringSliceValue)(p)
-}
-
-func (s *stringSliceValue) Set(val string) error {
-	*s = append(*s, val)
-	return nil
-}
-
-func (s *stringSliceValue) Get() interface{} {
-	return []string(*s)
-}
-
-func (s *stringSliceValue) String() string {
-	return "[" + strings.Join(*s, ",") + "]"
-}
-
 // -- float64 Value
 type float64Value float64
 
@@ -835,32 +814,6 @@ func String(name string, value string, usage string) *string {
 	return CommandLine.String(name, value, usage)
 }
 
-// StringSliceVar defines a string flag with specified name, default value, and usage string.
-// The argument p points to a string slice variable in which to store the value of the flag.
-func (f *FlagSet) StringSliceVar(p *[]string, name string, value []string, usage string) {
-	f.Var(newStringSliceValue(value, p), name, usage)
-}
-
-// StringSliceVar defines a string flag with specified name, default value, and usage string.
-// The argument p points to a string slice variable in which to store the value of the flag.
-func StringSliceVar(p *[]string, name string, value []string, usage string) {
-	CommandLine.Var(newStringSliceValue(value, p), name, usage)
-}
-
-// StringSlice defines a string flag with specified name, default value, and usage string.
-// The return value is the address of a string slice variable that stores the value of the flag.
-func (f *FlagSet) StringSlice(name string, value []string, usage string) *[]string {
-	p := new([]string)
-	f.StringSliceVar(p, name, value, usage)
-	return p
-}
-
-// StringSlice defines a string flag with specified name, default value, and usage string.
-// The return value is the address of a string slice variable that stores the value of the flag.
-func StringSlice(name string, value []string, usage string) *[]string {
-	return CommandLine.StringSlice(name, value, usage)
-}
-
 // Float64Var defines a float64 flag with specified name, default value, and usage string.
 // The argument p points to a float64 variable in which to store the value of the flag.
 func (f *FlagSet) Float64Var(p *float64, name string, value float64, usage string) {
@@ -1036,17 +989,12 @@ func (f *FlagSet) parseOne() (bool, error) {
 		return false, nil
 	}
 	s := f.args[0]
-	if len(s) < 2 {
+	if len(s) < 2 || s[0] != '-' {
 		f.unkownArgs = append(f.unkownArgs, s)
 		f.args = f.args[1:]
 		return true, nil
 	}
 
-	if s[0] != '-' {
-		f.unkownArgs = append(f.unkownArgs, s)
-		f.args = f.args[1:]
-		return true, nil
-	}
 	numMinuses := 1
 	if s[1] == '-' {
 		numMinuses++
