@@ -348,6 +348,8 @@ type Flag struct {
 	Usage    string // help message
 	Value    Value  // value as set
 	DefValue string // default value (as text); for usage message
+	cbs      []func()
+	parent   *FlagSet
 }
 
 // sortFlags returns the flags as a slice in lexicographical sorted order.
@@ -918,6 +920,23 @@ func newName(name string) (string, []string, bool) {
 	return strings.Join(names, ", "), names, true
 }
 
+func initFormal(formal *map[string]*Flag) {
+	if *formal == nil {
+		*formal = make(map[string]*Flag)
+	}
+}
+
+func (f *FlagSet) alreadythereError(name string) {
+	var msg string
+	if f.name == "" {
+		msg = fmt.Sprintf("flag redefined: %s", name)
+	} else {
+		msg = fmt.Sprintf("%s flag redefined: %s", f.name, name)
+	}
+	fmt.Fprintln(f.Output(), msg)
+	panic(msg) // Happens only if flags are declared with identical names
+}
+
 // Var defines a flag with the specified name and usage string. The type and
 // value of the flag are represented by the first argument, of type Value, which
 // typically holds a user-defined implementation of Value. For instance, the
@@ -927,29 +946,27 @@ func newName(name string) (string, []string, bool) {
 func (f *FlagSet) Var(value Value, name string, usage string) {
 	// Remember the default value as a string; it won't change.
 	name, names, ok := newName(name)
-	flag := &Flag{name, usage, value, value.String()}
+	flag := &Flag{Name: name, Usage: usage, Value: value, DefValue: value.String()}
 	if ok {
-		if f.formal2 == nil {
-			f.formal2 = make(map[string]*Flag)
-		}
+		initFormal(&f.formal2)
 		for _, v := range names {
-			f.formal2[v] = &Flag{v, usage, value, value.String()}
+			_, alreadythere := f.formal2[v]
+			if alreadythere {
+				f.alreadythereError(name)
+			}
+
+			f.formal2[v] = &Flag{Name: v,
+				Usage:    usage,
+				Value:    value,
+				DefValue: value.String()}
 		}
 	}
 	_, alreadythere := f.formal[name]
 	if alreadythere {
-		var msg string
-		if f.name == "" {
-			msg = fmt.Sprintf("flag redefined: %s", name)
-		} else {
-			msg = fmt.Sprintf("%s flag redefined: %s", f.name, name)
-		}
-		fmt.Fprintln(f.Output(), msg)
-		panic(msg) // Happens only if flags are declared with identical names
+		f.alreadythereError(name)
 	}
-	if f.formal == nil {
-		f.formal = make(map[string]*Flag)
-	}
+
+	initFormal(&f.formal)
 
 	f.formal[name] = flag
 }
