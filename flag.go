@@ -1000,6 +1000,59 @@ func (f *FlagSet) usage() {
 	}
 }
 
+func findNameValue(name string) (string, bool, string) {
+	for i := 1; i < len(name); i++ { // equals cannot be first
+		if name[i] == '=' {
+			return name[i+1:], true, name[0:i]
+		}
+	}
+
+	return name, false, ""
+}
+
+func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
+	flag, alreadythere := f.formal[name] // BUG
+	if !alreadythere {
+		flag, alreadythere = f.formal2[name]
+		if !alreadythere {
+			if name == "help" || name == "h" { // special case for nice help message.
+				f.usage()
+				return nil, false, ErrHelp
+			}
+			return nil, false, f.failf("flag provided but not defined: -%s", name)
+		}
+	}
+	return flag, true, nil
+}
+
+func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string) (bool, error) {
+	if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
+		if hasValue {
+			if err := fv.Set(value); err != nil {
+				return false, f.failf("invalid boolean value %q for -%s: %v", value, name, err)
+			}
+		} else {
+			if err := fv.Set("true"); err != nil {
+				return false, f.failf("invalid boolean flag %s: %v", name, err)
+			}
+		}
+	} else {
+		// It must have a value, which might be the next argument.
+		if !hasValue && len(f.args) > 0 {
+			// value is the next arg
+			hasValue = true
+			value, f.args = f.args[0], f.args[1:]
+		}
+		if !hasValue {
+			return false, f.failf("flag needs an argument: -%s", name)
+		}
+		if err := flag.Value.Set(value); err != nil {
+			return false, f.failf("invalid value %q for flag -%s: %v", value, name, err)
+		}
+	}
+	return true, nil
+}
+
 // parseOne parses one flag. It reports whether a flag was seen.
 func (f *FlagSet) parseOne() (bool, error) {
 	if len(f.args) == 0 {
@@ -1029,51 +1082,23 @@ func (f *FlagSet) parseOne() (bool, error) {
 	f.args = f.args[1:]
 	hasValue := false
 	value := ""
-	for i := 1; i < len(name); i++ { // equals cannot be first
-		if name[i] == '=' {
-			value = name[i+1:]
-			hasValue = true
-			name = name[0:i]
-			break
-		}
-	}
-	m := f.formal
-	flag, alreadythere := m[name] // BUG
-	if !alreadythere {
-		flag, alreadythere = f.formal2[name]
-		if !alreadythere {
-			if name == "help" || name == "h" { // special case for nice help message.
-				f.usage()
-				return false, ErrHelp
-			}
-			return false, f.failf("flag provided but not defined: -%s", name)
-		}
+
+	name, hasValue, value = findNameValue(name)
+
+	var (
+		flag *Flag
+		seen bool
+		err  error
+	)
+
+	if flag, seen, err = f.getFlag(name); err != nil {
+		return seen, err
 	}
 
-	if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
-		if hasValue {
-			if err := fv.Set(value); err != nil {
-				return false, f.failf("invalid boolean value %q for -%s: %v", value, name, err)
-			}
-		} else {
-			if err := fv.Set("true"); err != nil {
-				return false, f.failf("invalid boolean flag %s: %v", name, err)
-			}
-		}
-	} else {
-		// It must have a value, which might be the next argument.
-		if !hasValue && len(f.args) > 0 {
-			// value is the next arg
-			hasValue = true
-			value, f.args = f.args[0], f.args[1:]
-		}
-		if !hasValue {
-			return false, f.failf("flag needs an argument: -%s", name)
-		}
-		if err := flag.Value.Set(value); err != nil {
-			return false, f.failf("invalid value %q for flag -%s: %v", value, name, err)
-		}
+	if seen, err = f.setValue(flag, name, hasValue, value); err != nil {
+		return seen, err
 	}
+
 	if f.actual == nil {
 		f.actual = make(map[string]*Flag)
 	}
