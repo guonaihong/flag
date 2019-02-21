@@ -1003,7 +1003,7 @@ func (f *FlagSet) usage() {
 func findNameValue(name string) (string, bool, string) {
 	for i := 1; i < len(name); i++ { // equals cannot be first
 		if name[i] == '=' {
-			return name[i+1:], true, name[0:i]
+			return name[0:i], true, name[i+1:]
 		}
 	}
 
