@@ -309,6 +309,12 @@ type Getter interface {
 	Get() interface{}
 }
 
+type Flags int
+
+const (
+	PosixShort Flags = iota + 1
+)
+
 // ErrorHandling defines how FlagSet.Parse behaves if the parse fails.
 type ErrorHandling int
 
@@ -329,17 +335,18 @@ type FlagSet struct {
 	// to ExitOnError, which exits the program after calling Usage.
 	Usage func()
 
-	name          string
-	version       string
-	author        string
-	parsed        bool
-	actual        map[string]*Flag
-	formal        map[string]*Flag
-	formal2       map[string]*Flag
-	args          []string // arguments after flags
-	unkownArgs    []string // Unresolvable parameters
-	errorHandling ErrorHandling
-	output        io.Writer // nil means stderr; use out() accessor
+	name           string
+	version        string
+	author         string
+	parsed         bool
+	actual         map[string]*Flag
+	formal         map[string]*Flag
+	formal2        map[string]*Flag
+	args           []string // arguments after flags
+	unkownArgs     []string // Unresolvable parameters
+	errorHandling  ErrorHandling
+	output         io.Writer // nil means stderr; use out() accessor
+	openPosixShort bool
 }
 
 // A Flag represents the state of a flag.
@@ -348,8 +355,10 @@ type Flag struct {
 	Usage    string // help message
 	Value    Value  // value as set
 	DefValue string // default value (as text); for usage message
-	cbs      []func()
-	parent   *FlagSet
+
+	cbs    []func()
+	parent *FlagSet
+	flags  Flags
 }
 
 // sortFlags returns the flags as a slice in lexicographical sorted order.
@@ -1019,10 +1028,22 @@ func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
 				f.usage()
 				return nil, false, ErrHelp
 			}
-			return nil, false, f.failf("flag provided but not defined: -%s", name)
+			return nil, false, fmt.Errorf("flag provided but not defined: -%s", name)
 		}
 	}
 	return flag, true, nil
+}
+
+func (f *FlagSet) setFlag(flag *Flag, name string, hasValue bool, value string) (bool, error) {
+	if seen, err := f.setValue(flag, name, hasValue, value); err != nil {
+		return seen, err
+	}
+
+	if f.actual == nil {
+		f.actual = make(map[string]*Flag)
+	}
+	f.actual[name] = flag
+	return true, nil
 }
 
 func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string) (bool, error) {
@@ -1088,22 +1109,35 @@ func (f *FlagSet) parseOne() (bool, error) {
 	var (
 		flag *Flag
 		seen bool
-		err  error
+		err0 error
 	)
 
-	if flag, seen, err = f.getFlag(name); err != nil {
-		return seen, err
+	if flag, seen, err0 = f.getFlag(name); err0 != nil && err0 != ErrHelp {
+		if !f.openPosixShort {
+			return seen, err0
+		}
+
+		count := 0
+		if numMinuses == 1 {
+			for i, _ := range name {
+				flag, seen, err := f.getFlag(string(name[i]))
+				if err == nil && (flag.flags&PosixShort) > 0 {
+					if seen, err = f.setFlag(flag, name, false, ""); err != nil {
+						return seen, err
+					}
+					count++
+				}
+			}
+
+			if count > 0 {
+				return true, nil
+			}
+		}
+
+		return false, f.failf("%s", err0.Error())
 	}
 
-	if seen, err = f.setValue(flag, name, hasValue, value); err != nil {
-		return seen, err
-	}
-
-	if f.actual == nil {
-		f.actual = make(map[string]*Flag)
-	}
-	f.actual[name] = flag
-	return true, nil
+	return f.setFlag(flag, name, hasValue, value)
 }
 
 // Parse parses flag definitions from the argument list, which should not

@@ -1,6 +1,16 @@
 package flag
 
+import (
+	"fmt"
+)
+
 func (f *FlagSet) flagVar(flag *Flag) {
+	if flag.flags&PosixShort > 0 {
+		if _, ok := flag.Value.(boolFlag); !ok {
+			panic(fmt.Sprintf("Type %T cannot use PosixShort tag", flag.Value))
+		}
+	}
+
 	name := flag.Name
 	name, names, ok := newName(name)
 	if ok {
@@ -16,6 +26,7 @@ func (f *FlagSet) flagVar(flag *Flag) {
 				Value:    flag.Value,
 				DefValue: flag.DefValue,
 				cbs:      flag.cbs,
+				flags:    flag.flags,
 			}
 		}
 	}
@@ -36,6 +47,19 @@ func (f *FlagSet) Opt(name string, usage string) *Flag {
 func (f *Flag) IsEnd(cb func()) *Flag {
 	f.cbs = append(f.cbs, cb)
 	return f
+}
+
+func (f *Flag) Flags(flag Flags) *Flag {
+	f.flags |= flag
+	f.parent.openPosixShort = true
+	return f
+}
+
+func (f *Flag) NewBool(defValue bool) *bool {
+	p := new(bool)
+	f.Value = newBoolValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
 }
 
 func (f *Flag) NewInt64Slice(defValue []int64) *[]int64 {
