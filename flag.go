@@ -1035,6 +1035,7 @@ func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
 }
 
 func (f *FlagSet) setFlag(flag *Flag, name string, hasValue bool, value string) (bool, error) {
+
 	if seen, err := f.setValue(flag, name, hasValue, value); err != nil {
 		return seen, err
 	}
@@ -1112,7 +1113,11 @@ func (f *FlagSet) parseOne() (bool, error) {
 		err0 error
 	)
 
-	if flag, seen, err0 = f.getFlag(name); err0 != nil && err0 != ErrHelp {
+	if flag, seen, err0 = f.getFlag(name); err0 != nil {
+		if err0 == ErrHelp {
+			return false, err0
+		}
+
 		if !f.openPosixShort {
 			return seen, err0
 		}

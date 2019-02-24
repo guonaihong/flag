@@ -58,4 +58,9 @@ func TestOptHelp(t *testing.T) {
 	if err != nil {
 		t.Fatal("expected no error; got ", err)
 	}
+
+	err = fs.Parse([]string{"-h"})
+	if err != ErrHelp {
+		t.Fatal("expected no error; got ", err)
+	}
 }
