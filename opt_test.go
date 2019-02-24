@@ -2,6 +2,7 @@ package flag
 
 import (
 	"testing"
+	"time"
 )
 
 func TestPosixShort(t *testing.T) {
@@ -62,5 +63,73 @@ func TestOptHelp(t *testing.T) {
 	err = fs.Parse([]string{"-h"})
 	if err != ErrHelp {
 		t.Fatal("expected no error; got ", err)
+	}
+}
+
+func TestOptParse(t *testing.T) {
+	fs := NewFlagSet("test", ContinueOnError)
+
+	boolFlag := fs.Opt("bool", "bool value").NewBool(false)
+	bool2Flag := fs.Opt("bool2", "bool2 value").NewBool(false)
+	intFlag := fs.Opt("int", "int value").NewInt(0)
+	int64Flag := fs.Opt("int64", "int64 value").NewInt64(0)
+	uintFlag := fs.Opt("uint", "uint value").NewUint(0)
+	uint64Flag := fs.Opt("uint64", "uint64 value").NewUint64(0)
+	stringFlag := fs.Opt("string", "string value").NewString("0")
+	float64Flag := fs.Opt("float64", "float64 value").NewFloat64(0)
+	durationFlag := fs.Opt("duration", "time.Duration value").NewDuration(5 * time.Second)
+
+	extra := "one-extra-argument"
+	args := []string{
+		"-bool",
+		"-bool2=true",
+		"--int", "22",
+		"--int64", "0x23",
+		"-uint", "24",
+		"--uint64", "25",
+		"-string", "hello",
+		"-float64", "2718e28",
+		"-duration", "2m",
+		extra,
+	}
+
+	if err := fs.Parse(args); err != nil {
+		t.Fatal(err)
+	}
+	if !fs.Parsed() {
+		t.Error("f.Parse() = false after Parse")
+	}
+	if *boolFlag != true {
+		t.Error("bool flag should be true, is ", *boolFlag)
+	}
+	if *bool2Flag != true {
+		t.Error("bool2 flag should be true, is ", *bool2Flag)
+	}
+	if *intFlag != 22 {
+		t.Error("int flag should be 22, is ", *intFlag)
+	}
+	if *int64Flag != 0x23 {
+		t.Error("int64 flag should be 0x23, is ", *int64Flag)
+	}
+	if *uintFlag != 24 {
+		t.Error("uint flag should be 24, is ", *uintFlag)
+	}
+	if *uint64Flag != 25 {
+		t.Error("uint64 flag should be 25, is ", *uint64Flag)
+	}
+	if *stringFlag != "hello" {
+		t.Error("string flag should be `hello`, is ", *stringFlag)
+	}
+	if *float64Flag != 2718e28 {
+		t.Error("float64 flag should be 2718e28, is ", *float64Flag)
+	}
+	if *durationFlag != 2*time.Minute {
+		t.Error("duration flag should be 2m, is ", *durationFlag)
+	}
+
+	if len(fs.Args()) != 1 {
+		t.Error("expected one argument, got", len(fs.Args()))
+	} else if fs.Args()[0] != extra {
+		t.Errorf("expected argument %q got %q", extra, fs.Args()[0])
 	}
 }

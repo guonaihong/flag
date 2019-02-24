@@ -2,6 +2,7 @@ package flag
 
 import (
 	"fmt"
+	"time"
 )
 
 func (f *FlagSet) flagVar(flag *Flag) {
@@ -58,6 +59,55 @@ func (f *Flag) Flags(flag Flags) *Flag {
 func (f *Flag) NewBool(defValue bool) *bool {
 	p := new(bool)
 	f.Value = newBoolValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewString(defValue string) *string {
+	p := new(string)
+	f.Value = newStringValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewUint(defValue uint) *uint {
+	p := new(uint)
+	f.Value = newUintValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewUint64(defValue uint64) *uint64 {
+	p := new(uint64)
+	f.Value = newUint64Value(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewInt(defValue int) *int {
+	p := new(int)
+	f.Value = newIntValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewInt64(defValue int64) *int64 {
+	p := new(int64)
+	f.Value = newInt64Value(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewFloat64(defValue float64) *float64 {
+	p := new(float64)
+	f.Value = newFloat64Value(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewDuration(defValue time.Duration) *time.Duration {
+	p := new(time.Duration)
+	f.Value = newDurationValue(defValue, p)
 	f.parent.flagVar(f)
 	return p
 }
