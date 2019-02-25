@@ -5,7 +5,41 @@ import (
 	"time"
 )
 
-func TestPosixShort(t *testing.T) {
+func TestPosixShortString(t *testing.T) {
+
+	var ignoreCase *bool
+	var afterContext *string
+
+	fs := NewFlagSet("grep", ContinueOnError)
+	addOption := func(fs *FlagSet) {
+		ignoreCase = fs.Opt("i, ignore-case", "Ignore case distinctions,"+
+			"so that characters that differ only in case match each other.").
+			Flags(PosixShort).NewBool(false)
+
+		afterContext = fs.Opt("A, after-context", "Print NUM lines of trailing context after matching lines."+
+			"Places a line containing a group separator (--) between contiguous groups of matches.  "+
+			"With the  -o or --only-matching option, this has no effect and a warning is given.").
+			Flags(PosixShort).NewString("")
+	}
+
+	addOption(fs)
+	fs.Parse([]string{"-iA5"})
+
+	if !*ignoreCase || *afterContext != "5" {
+		t.Error("flag was not set by -iA5")
+	}
+
+	fs = NewFlagSet("grep", ContinueOnError)
+
+	addOption(fs)
+	fs.Parse([]string{"-iA", "66"})
+
+	if !*ignoreCase || *afterContext != "66" {
+		t.Error("flag was not set by -iA 66")
+	}
+}
+
+func TestPosixShortBool(t *testing.T) {
 	fs := NewFlagSet("cat", ContinueOnError)
 	showNonprinting := fs.Opt("v, show-nonprinting", "use ^ and M- notation, except for LFD and TAB").
 		Flags(PosixShort).NewBool(false)
@@ -13,7 +47,7 @@ func TestPosixShort(t *testing.T) {
 	showTabs := fs.Opt("T, show-tabs", "display TAB characters as ^I").Flags(PosixShort).NewBool(false)
 	fs.Parse([]string{"-Tv"})
 
-	if *showNonprinting != true && *showTabs != true {
+	if *showNonprinting != true || *showTabs != true {
 		t.Error("flag was not set by -Tv")
 	}
 
@@ -25,13 +59,20 @@ func TestPosixShort(t *testing.T) {
 	}
 
 	opts := make([]*bool, 7)
-	opts[0] = fs.Opt("A, show-all", "equivalent to -vET").Flags(PosixShort).NewBool(false)
-	opts[1] = fs.Opt("b, number-nonblank", "number nonempty output lines, overrides -n").Flags(PosixShort).NewBool(false)
-	opts[2] = fs.Opt("e", "equivalent to -vE").Flags(PosixShort).NewBool(false)
-	opts[3] = fs.Opt("E, show-end", "display $ at end of each line").Flags(PosixShort).NewBool(false)
-	opts[4] = fs.Opt("n, numbe", "number all output line").Flags(PosixShort).NewBool(false)
-	opts[5] = fs.Opt("s, squeeze-blank", "suppress repeated empty output lines").Flags(PosixShort).NewBool(false)
-	opts[6] = fs.Opt("t", "equivalent to -vT").Flags(PosixShort).NewBool(false)
+	opts[0] = fs.Opt("A, show-all", "equivalent to -vET").
+		Flags(PosixShort).NewBool(false)
+	opts[1] = fs.Opt("b, number-nonblank", "number nonempty output lines, overrides -n").
+		Flags(PosixShort).NewBool(false)
+	opts[2] = fs.Opt("e", "equivalent to -vE").
+		Flags(PosixShort).NewBool(false)
+	opts[3] = fs.Opt("E, show-end", "display $ at end of each line").
+		Flags(PosixShort).NewBool(false)
+	opts[4] = fs.Opt("n, numbe", "number all output line").
+		Flags(PosixShort).NewBool(false)
+	opts[5] = fs.Opt("s, squeeze-blank", "suppress repeated empty output lines").
+		Flags(PosixShort).NewBool(false)
+	opts[6] = fs.Opt("t", "equivalent to -vT").
+		Flags(PosixShort).NewBool(false)
 
 	fs.Parse([]string{"-tsnEebA"})
 
@@ -63,6 +104,32 @@ func TestOptHelp(t *testing.T) {
 	err = fs.Parse([]string{"-h"})
 	if err != ErrHelp {
 		t.Fatal("expected no error; got ", err)
+	}
+}
+
+func TestOptCustomslice(t *testing.T) {
+	fs := NewFlagSet("test-custonslice", ContinueOnError)
+
+	header := fs.Opt("H", "http header").Flags(PosixShort | GreedyMode).
+		NewStringSlice([]string{})
+	url := fs.Opt("url", "http url").NewString("")
+
+	fs.Parse([]string{"-H", "sid:sid1234", "time:time-value", "score:1.0", "-url", "test.com"})
+
+	testHeader := []string{"sid:sid1234", "time:time-value", "score:1.0"}
+
+	if len(*header) != len(testHeader) {
+		t.Fatal("The parsed header is inconsistent with testHeader")
+	}
+
+	for k := range *header {
+		if (*header)[k] != testHeader[k] {
+			t.Fatal("The parsed header is inconsistent with testHeader")
+		}
+	}
+
+	if *url != "test.com" {
+		t.Fatal("url fail")
 	}
 }
 

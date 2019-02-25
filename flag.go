@@ -313,6 +313,7 @@ type Flags int
 
 const (
 	PosixShort Flags = iota + 1
+	GreedyMode
 )
 
 // ErrorHandling defines how FlagSet.Parse behaves if the parse fails.
@@ -1124,14 +1125,41 @@ func (f *FlagSet) parseOne() (bool, error) {
 
 		count := 0
 		if numMinuses == 1 {
-			for i, _ := range name {
-				flag, seen, err := f.getFlag(string(name[i]))
-				if err == nil && (flag.flags&PosixShort) > 0 {
-					if seen, err = f.setFlag(flag, name, false, ""); err != nil {
-						return seen, err
-					}
-					count++
+			for i := range name {
+				newName := string(name[i])
+				flag, seen, err := f.getFlag(newName)
+				if err != nil {
+					continue
 				}
+
+				if (flag.flags & PosixShort) == 0 {
+					continue
+				}
+
+				hasValue := false
+				value := ""
+				isBool := true
+
+				if fv, ok := flag.Value.(boolFlag); !(ok && fv.IsBoolFlag()) {
+
+					if i+1 != len(name) {
+						hasValue = true
+						value = name[i+1:]
+					}
+
+					isBool = false
+				}
+
+				seen, err = f.setFlag(flag, newName, hasValue, value)
+				if err != nil {
+					return seen, err
+				}
+
+				if !isBool && !hasValue {
+					return true, nil
+				}
+
+				count++
 			}
 
 			if count > 0 {

@@ -1,15 +1,13 @@
 package flag
 
 import (
-	"fmt"
 	"time"
 )
 
 func (f *FlagSet) flagVar(flag *Flag) {
-	if flag.flags&PosixShort > 0 {
-		if _, ok := flag.Value.(boolFlag); !ok {
-			panic(fmt.Sprintf("Type %T cannot use PosixShort tag", flag.Value))
-		}
+
+	if flag.flags&PosixShort > 0 && flag.flags.GreedyMode > 0 {
+		panic("Cannot set both PosixShort and GreedyMode")
 	}
 
 	name := flag.Name
