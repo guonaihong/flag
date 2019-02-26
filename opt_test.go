@@ -110,7 +110,7 @@ func TestOptHelp(t *testing.T) {
 func TestOptCustomslice(t *testing.T) {
 	fs := NewFlagSet("test-custonslice", ContinueOnError)
 
-	header := fs.Opt("H", "http header").Flags(PosixShort | GreedyMode).
+	header := fs.Opt("H", "http header").Flags(GreedyMode).
 		NewStringSlice([]string{})
 	url := fs.Opt("url", "http url").NewString("")
 
@@ -119,17 +119,21 @@ func TestOptCustomslice(t *testing.T) {
 	testHeader := []string{"sid:sid1234", "time:time-value", "score:1.0"}
 
 	if len(*header) != len(testHeader) {
-		t.Fatal("The parsed header is inconsistent with testHeader")
+		t.Fatal("The parsed header is inconsistent with testHeader",
+			header, "\n",
+			testHeader, "\n")
 	}
 
 	for k := range *header {
 		if (*header)[k] != testHeader[k] {
-			t.Fatal("The parsed header is inconsistent with testHeader")
+			t.Fatal("The parsed header is inconsistent with testHeader",
+				header, "\n",
+				testHeader, "\n")
 		}
 	}
 
 	if *url != "test.com" {
-		t.Fatal("url fail")
+		t.Fatal("url fail->", *url, "\n")
 	}
 }
 

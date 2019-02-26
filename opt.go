@@ -6,7 +6,7 @@ import (
 
 func (f *FlagSet) flagVar(flag *Flag) {
 
-	if flag.flags&PosixShort > 0 && flag.flags.GreedyMode > 0 {
+	if flag.flags&PosixShort > 0 && flag.flags&GreedyMode > 0 {
 		panic("Cannot set both PosixShort and GreedyMode")
 	}
 
@@ -117,7 +117,7 @@ func (f *Flag) NewInt64Slice(defValue []int64) *[]int64 {
 	return p
 }
 
-func (f *Flag) NewStringlice(defValue []string) *[]string {
+func (f *Flag) NewStringSlice(defValue []string) *[]string {
 	p := new([]string)
 	f.Value = newStringSliceValue(defValue, p)
 	f.parent.flagVar(f)

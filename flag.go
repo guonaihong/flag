@@ -1010,7 +1010,7 @@ func (f *FlagSet) usage() {
 	}
 }
 
-func findNameValue(name string) (string, bool, string) {
+func parseNameValue(name string) (string, bool, string) {
 	for i := 1; i < len(name); i++ { // equals cannot be first
 		if name[i] == '=' {
 			return name[0:i], true, name[i+1:]
@@ -1076,41 +1076,99 @@ func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string)
 	return true, nil
 }
 
-// parseOne parses one flag. It reports whether a flag was seen.
-func (f *FlagSet) parseOne() (bool, error) {
+func (f *FlagSet) getName(numMinuses *int, name *string, flags Flags) (bool, bool, error) {
 	if len(f.args) == 0 {
-		return false, nil
+		return false, false, nil
 	}
 	s := f.args[0]
 	if len(s) < 2 || s[0] != '-' {
-		f.unkownArgs = append(f.unkownArgs, s)
+		if flags&GreedyMode != GreedyMode {
+			f.unkownArgs = append(f.unkownArgs, s)
+		}
 		f.args = f.args[1:]
-		return true, nil
+		*name = s
+		return false, true, nil
 	}
 
-	numMinuses := 1
+	*numMinuses = 1
 	if s[1] == '-' {
-		numMinuses++
+		(*numMinuses)++
 		if len(s) == 2 { // "--" terminates the flags
 			f.args = f.args[1:]
-			return false, nil
+			return false, false, nil
 		}
 	}
-	name := s[numMinuses:]
-	if len(name) == 0 || name[0] == '-' || name[0] == '=' {
-		return false, f.failf("bad flag syntax: %s", s)
+
+	*name = s[*numMinuses:]
+	if len(*name) == 0 || (*name)[0] == '-' || (*name)[0] == '=' {
+		return false, false, f.failf("bad flag syntax: %s", s)
 	}
 
+	return true, true, nil
+}
+
+func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, error) {
+	count := 0
+	for i := range name {
+		newName := string(name[i])
+		flag, seen, err := f.getFlag(newName)
+		if err != nil {
+			continue
+		}
+
+		if (flag.flags & PosixShort) == 0 {
+			continue
+		}
+
+		hasValue := false
+		value := ""
+		isBool := true
+
+		if fv, ok := flag.Value.(boolFlag); !(ok && fv.IsBoolFlag()) {
+
+			if i+1 != len(name) {
+				hasValue = true
+				value = name[i+1:]
+			}
+
+			isBool = false
+		}
+
+		seen, err = f.setFlag(flag, newName, hasValue, value)
+		if err != nil {
+			return false, seen, err
+		}
+
+		if !isBool && !hasValue {
+			return false, true, nil
+		}
+
+		count++
+	}
+
+	if count > 0 {
+		return false, true, nil
+	}
+
+	return true, true, nil
+}
+
+// parseOne parses one flag. It reports whether a flag was seen.
+func (f *FlagSet) parseOne() (bool, error) {
+
+	name, numMinuses := "", 0
+
+	next, seen, err := f.getName(&numMinuses, &name, 0)
+	if !next {
+		return seen, err
+	}
 	// it's a flag. does it have an argument?
 	f.args = f.args[1:]
-	hasValue := false
-	value := ""
 
-	name, hasValue, value = findNameValue(name)
+	name, hasValue, value := parseNameValue(name)
 
 	var (
 		flag *Flag
-		seen bool
 		err0 error
 	)
 
@@ -1123,51 +1181,41 @@ func (f *FlagSet) parseOne() (bool, error) {
 			return seen, err0
 		}
 
-		count := 0
 		if numMinuses == 1 {
-			for i := range name {
-				newName := string(name[i])
-				flag, seen, err := f.getFlag(newName)
-				if err != nil {
-					continue
-				}
-
-				if (flag.flags & PosixShort) == 0 {
-					continue
-				}
-
-				hasValue := false
-				value := ""
-				isBool := true
-
-				if fv, ok := flag.Value.(boolFlag); !(ok && fv.IsBoolFlag()) {
-
-					if i+1 != len(name) {
-						hasValue = true
-						value = name[i+1:]
-					}
-
-					isBool = false
-				}
-
-				seen, err = f.setFlag(flag, newName, hasValue, value)
-				if err != nil {
-					return seen, err
-				}
-
-				if !isBool && !hasValue {
-					return true, nil
-				}
-
-				count++
-			}
-
-			if count > 0 {
-				return true, nil
+			next, seen, err := f.getPosixShortOpt(numMinuses, name)
+			if !next {
+				return seen, err
 			}
 		}
-
 		return false, f.failf("%s", err0.Error())
+	}
+
+	if flag.flags&GreedyMode > 0 {
+		for len(f.args) > 0 {
+
+			name, numMinuses = "", 0
+
+			seen, err = f.setFlag(flag, name, hasValue, value)
+			if err != nil {
+				return seen, err
+			}
+			next, seen, err = f.getName(&numMinuses, &name, GreedyMode)
+			if !seen {
+				return seen, err
+			}
+			if next {
+				name, hasValue, value = parseNameValue(name)
+				//fmt.Printf("---> name(%s), hasValue(%t), value(%s) args(%s)\n", name, hasValue, value, f.args)
+				if flag, seen, err0 = f.getFlag(name); err0 != nil {
+					return seen, f.failf("%s", err0.Error())
+				}
+
+				f.args = f.args[1:]
+				break
+			}
+			hasValue = true
+			value = name
+		}
 	}
 
 	return f.setFlag(flag, name, hasValue, value)
