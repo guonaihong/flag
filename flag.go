@@ -1190,6 +1190,7 @@ func (f *FlagSet) parseOne() (bool, error) {
 		return false, f.failf("%s", err0.Error())
 	}
 
+try:
 	if flag.flags&GreedyMode > 0 {
 		for len(f.args) > 0 {
 
@@ -1211,7 +1212,7 @@ func (f *FlagSet) parseOne() (bool, error) {
 				}
 
 				f.args = f.args[1:]
-				break
+				goto try
 			}
 			hasValue = true
 			value = name

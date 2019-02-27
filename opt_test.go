@@ -107,7 +107,7 @@ func TestOptHelp(t *testing.T) {
 	}
 }
 
-func TestOptCustomslice(t *testing.T) {
+func TestOptGreedyMode(t *testing.T) {
 	fs := NewFlagSet("test-custonslice", ContinueOnError)
 
 	header := fs.Opt("H", "http header").Flags(GreedyMode).
@@ -135,6 +135,8 @@ func TestOptCustomslice(t *testing.T) {
 	if *url != "test.com" {
 		t.Fatal("url fail->", *url, "\n")
 	}
+
+	//	fs2 := NewFlagSet("jm").
 }
 
 func TestOptParse(t *testing.T) {
@@ -203,4 +205,5 @@ func TestOptParse(t *testing.T) {
 	} else if fs.Args()[0] != extra {
 		t.Errorf("expected argument %q got %q", extra, fs.Args()[0])
 	}
+
 }
