@@ -207,3 +207,27 @@ func TestOptParse(t *testing.T) {
 	}
 
 }
+
+func TestRegexp(t *testing.T) {
+	fs := NewFlagSet("head", ContinueOnError)
+	lines := fs.Opt(`^\d+$,lines`, "print the first NUM lines instead of the first 10;"+
+		"with the leading '-', print all but the last"+
+		"NUM lines of each file").
+		Flags(Regexp).NewString("")
+
+	fs.Parse([]string{"-1"})
+
+	if *lines != "1" {
+		t.Errorf("flag was not set by -1, the actual value is (%s)\n", *lines)
+	}
+
+	fs.Parse([]string{"-2"})
+	if *lines != "2" {
+		t.Errorf("flag was not set by -1, the actual value is (%s)\n", *lines)
+	}
+
+	fs.Parse([]string{"-3"})
+	if *lines != "3" {
+		t.Errorf("flag was not set by -3, the actual value is (%s)\n", *lines)
+	}
+}

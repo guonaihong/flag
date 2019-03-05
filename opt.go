@@ -50,7 +50,13 @@ func (f *Flag) IsEnd(cb func()) *Flag {
 
 func (f *Flag) Flags(flag Flags) *Flag {
 	f.flags |= flag
-	f.parent.openPosixShort = true
+	if flag&PosixShort == PosixShort {
+		f.parent.openPosixShort = true
+	}
+
+	if flag&Regexp == Regexp {
+		f.parent.openRegexp = true
+	}
 	return f
 }
 
@@ -124,6 +130,6 @@ func (f *Flag) NewStringSlice(defValue []string) *[]string {
 	return p
 }
 
-func Opt(name string, usage string) {
-	CommandLine.Opt(name, usage)
+func Opt(name string, usage string) *Flag {
+	return CommandLine.Opt(name, usage)
 }

@@ -71,6 +71,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -312,8 +313,10 @@ type Getter interface {
 type Flags int
 
 const (
-	PosixShort Flags = iota + 1
+	PosixShort Flags = 1 << iota
 	GreedyMode
+	Regexp
+	KeyisValue
 )
 
 // ErrorHandling defines how FlagSet.Parse behaves if the parse fails.
@@ -348,6 +351,7 @@ type FlagSet struct {
 	errorHandling  ErrorHandling
 	output         io.Writer // nil means stderr; use out() accessor
 	openPosixShort bool
+	openRegexp     bool
 }
 
 // A Flag represents the state of a flag.
@@ -1021,18 +1025,37 @@ func parseNameValue(name string) (string, bool, string) {
 }
 
 func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
-	flag, alreadythere := f.formal[name] // BUG
-	if !alreadythere {
-		flag, alreadythere = f.formal2[name]
-		if !alreadythere {
-			if name == "help" || name == "h" { // special case for nice help message.
-				f.usage()
-				return nil, false, ErrHelp
+	var formals []map[string]*Flag
+	formals = append(formals, f.formal)
+	formals = append(formals, f.formal2)
+
+	for _, formal := range formals {
+		if f.openRegexp {
+			for k, v := range formal {
+				//todo Compile and the full Regexp interface.
+				matched, _ := regexp.Match(k, []byte(name))
+				fmt.Printf("matched(%t), name(%s), k(%s), %#v\n", matched, name, k, v.Name)
+				if matched {
+					return v, true, nil
+				}
 			}
-			return nil, false, fmt.Errorf("flag provided but not defined: -%s", name)
+			continue
 		}
+
+		flag, alreadythere := f.formal[name] // BUG
+		if !alreadythere {
+			continue
+		}
+
+		return flag, true, nil
 	}
-	return flag, true, nil
+
+	if name == "help" || name == "h" { // special case for nice help message.
+		f.usage()
+		return nil, false, ErrHelp
+	}
+
+	return nil, false, fmt.Errorf("flag provided but not defined: -%s", name)
 }
 
 func (f *FlagSet) setFlag(flag *Flag, name string, hasValue bool, value string) (bool, error) {
