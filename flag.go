@@ -962,7 +962,7 @@ func (f *FlagSet) Var(value Value, name string, usage string) {
 		for _, v := range names {
 			_, alreadythere := f.formal2[v]
 			if alreadythere {
-				f.alreadythereError(name)
+				f.alreadythereError(v)
 			}
 
 			f.formal2[v] = &Flag{Name: v,
