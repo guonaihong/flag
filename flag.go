@@ -1046,7 +1046,7 @@ func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
 			continue
 		}
 
-		flag, alreadythere := f.formal[name] // BUG
+		flag, alreadythere := formal[name] // BUG
 		if !alreadythere {
 			continue
 		}
