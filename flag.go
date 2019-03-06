@@ -1039,7 +1039,6 @@ func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
 			for k, v := range formal {
 				//todo Compile and the full Regexp interface.
 				matched, _ := regexp.Match(k, []byte(name))
-				fmt.Printf("matched(%t), name(%s), k(%s), %#v\n", matched, name, k, v.Name)
 				if matched {
 					return v, true, nil
 				}
@@ -1249,7 +1248,7 @@ try:
 
 	if flag.flags&RegexKeyIsValue > 0 {
 		value = name
-		hasValue = false
+		hasValue = true
 	}
 	return f.setFlag(flag, name, hasValue, value)
 }
