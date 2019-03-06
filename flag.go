@@ -315,8 +315,7 @@ type Flags int
 const (
 	PosixShort Flags = 1 << iota
 	GreedyMode
-	Regexp
-	KeyisValue
+	RegexKeyIsValue
 )
 
 // ErrorHandling defines how FlagSet.Parse behaves if the parse fails.
@@ -339,19 +338,20 @@ type FlagSet struct {
 	// to ExitOnError, which exits the program after calling Usage.
 	Usage func()
 
-	name           string
-	version        string
-	author         string
-	parsed         bool
-	actual         map[string]*Flag
-	formal         map[string]*Flag
-	formal2        map[string]*Flag
+	name      string
+	version   string
+	author    string
+	parsed    bool
+	actual    map[string]*Flag
+	formal    map[string]*Flag
+	shortLong map[string]*Flag
+	regex     map[string]*Flag
+
 	args           []string // arguments after flags
 	unkownArgs     []string // Unresolvable parameters
 	errorHandling  ErrorHandling
 	output         io.Writer // nil means stderr; use out() accessor
 	openPosixShort bool
-	openRegexp     bool
 }
 
 // A Flag represents the state of a flag.
@@ -361,9 +361,13 @@ type Flag struct {
 	Value    Value  // value as set
 	DefValue string // default value (as text); for usage message
 
-	cbs    []func()
 	parent *FlagSet
 	flags  Flags
+
+	Regex    string
+	Short    []string
+	Long     []string
+	isOption bool
 }
 
 // sortFlags returns the flags as a slice in lexicographical sorted order.
@@ -962,14 +966,14 @@ func (f *FlagSet) Var(value Value, name string, usage string) {
 	name, names, ok := newName(name)
 	flag := &Flag{Name: name, Usage: usage, Value: value, DefValue: value.String()}
 	if ok {
-		initFormal(&f.formal2)
+		initFormal(&f.shortLong)
 		for _, v := range names {
-			_, alreadythere := f.formal2[v]
+			_, alreadythere := f.shortLong[v]
 			if alreadythere {
 				f.alreadythereError(name)
 			}
 
-			f.formal2[v] = &Flag{Name: v,
+			f.shortLong[v] = &Flag{Name: v,
 				Usage:    usage,
 				Value:    value,
 				DefValue: value.String()}
@@ -1027,10 +1031,11 @@ func parseNameValue(name string) (string, bool, string) {
 func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
 	var formals []map[string]*Flag
 	formals = append(formals, f.formal)
-	formals = append(formals, f.formal2)
+	formals = append(formals, f.shortLong)
+	formals = append(formals, f.regex)
 
-	for _, formal := range formals {
-		if f.openRegexp {
+	for k, formal := range formals {
+		if k == 2 && len(formal) > 0 { //range regexp map
 			for k, v := range formal {
 				//todo Compile and the full Regexp interface.
 				matched, _ := regexp.Match(k, []byte(name))
@@ -1242,6 +1247,10 @@ try:
 		}
 	}
 
+	if flag.flags&RegexKeyIsValue > 0 {
+		value = name
+		hasValue = false
+	}
 	return f.setFlag(flag, name, hasValue, value)
 }
 

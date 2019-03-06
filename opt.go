@@ -1,8 +1,27 @@
 package flag
 
 import (
+	"bytes"
 	"time"
 )
+
+func (f *FlagSet) setNamesToMap(m *map[string]*Flag, names []string, flag *Flag) {
+
+	initFormal(m)
+	for _, v := range names {
+		_, alreadythere := (*m)[v]
+		if alreadythere {
+			f.alreadythereError(v)
+		}
+
+		(*m)[v] = &Flag{Name: v,
+			Usage:    flag.Usage,
+			Value:    flag.Value,
+			DefValue: flag.DefValue,
+			flags:    flag.flags,
+		}
+	}
+}
 
 func (f *FlagSet) flagVar(flag *Flag) {
 
@@ -11,24 +30,21 @@ func (f *FlagSet) flagVar(flag *Flag) {
 	}
 
 	name := flag.Name
-	name, names, ok := newName(name)
-	if ok {
-		initFormal(&f.formal2)
-		for _, v := range names {
-			_, alreadythere := f.formal2[v]
-			if alreadythere {
-				f.alreadythereError(name)
-			}
+	var names []string
+	var ok bool
 
-			f.formal2[v] = &Flag{Name: v,
-				Usage:    flag.Usage,
-				Value:    flag.Value,
-				DefValue: flag.DefValue,
-				cbs:      flag.cbs,
-				flags:    flag.flags,
-			}
+	if flag.isOption {
+		f.setNamesToMap(&f.regex, []string{flag.Regex}, flag)
+		f.setNamesToMap(&f.shortLong, flag.Short, flag)
+		f.setNamesToMap(&f.shortLong, flag.Long, flag)
+		name = flag.Name
+	} else {
+		name, names, ok = newName(name)
+		if ok {
+			f.setNamesToMap(&f.shortLong, names, flag)
 		}
 	}
+
 	_, alreadythere := f.formal[name]
 	if alreadythere {
 		f.alreadythereError(name)
@@ -39,23 +55,60 @@ func (f *FlagSet) flagVar(flag *Flag) {
 	f.formal[name] = flag
 }
 
-func (f *FlagSet) Opt(name string, usage string) *Flag {
-	return &Flag{Name: name, Usage: usage, parent: f}
+func (f *FlagSet) OptOpt(opt Flag) *Flag {
+	var buf bytes.Buffer
+
+	if len(opt.Name) > 0 {
+		panic("OptOpt function does not support setting Name")
+	}
+
+	if len(opt.Regex) > 0 {
+		buf.WriteString(opt.Regex)
+	}
+
+	if len(opt.Short) > 0 {
+		if buf.Len() > 0 {
+			buf.WriteString(", ")
+		}
+
+		for k, v := range opt.Short {
+			buf.WriteString(v)
+			if len(opt.Short) != k+1 {
+				buf.WriteString(", ")
+			}
+		}
+	}
+
+	if len(opt.Long) > 0 {
+		if buf.Len() > 0 {
+			buf.WriteString(", ")
+		}
+
+		for k, v := range opt.Long {
+			buf.WriteString(v)
+			if len(opt.Long) != k+1 {
+				buf.WriteString(", ")
+			}
+		}
+	}
+
+	if buf.Len() > 0 {
+		opt.isOption = true
+		opt.Name = buf.String()
+	}
+
+	opt.parent = f
+	return &opt
 }
 
-func (f *Flag) IsEnd(cb func()) *Flag {
-	f.cbs = append(f.cbs, cb)
-	return f
+func (f *FlagSet) Opt(name string, usage string) *Flag {
+	return &Flag{Name: name, Usage: usage, parent: f}
 }
 
 func (f *Flag) Flags(flag Flags) *Flag {
 	f.flags |= flag
 	if flag&PosixShort == PosixShort {
 		f.parent.openPosixShort = true
-	}
-
-	if flag&Regexp == Regexp {
-		f.parent.openRegexp = true
 	}
 	return f
 }
