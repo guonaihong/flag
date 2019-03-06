@@ -166,6 +166,11 @@ func TestOptGreedyMode(t *testing.T) {
 		t.Fatal("url fail->", *url, "\n")
 	}
 
+	args := fs.Args()
+	if len(args) != 0 {
+		t.Fatalf("len(args) != 0\n")
+	}
+
 	//	fs2 := NewFlagSet("jm").
 }
 

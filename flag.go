@@ -970,7 +970,7 @@ func (f *FlagSet) Var(value Value, name string, usage string) {
 		for _, v := range names {
 			_, alreadythere := f.shortLong[v]
 			if alreadythere {
-				f.alreadythereError(name)
+				f.alreadythereError(v)
 			}
 
 			f.shortLong[v] = &Flag{Name: v,
