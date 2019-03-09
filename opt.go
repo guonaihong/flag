@@ -33,8 +33,9 @@ func (f *FlagSet) flagVar(flag *Flag) {
 	var names []string
 	var ok bool
 
-	if flag.isOption {
+	if flag.isOptOpt {
 		f.setNamesToMap(&f.regex, []string{flag.Regex}, flag)
+		flag.flags ^= RegexKeyIsValue
 		f.setNamesToMap(&f.shortLong, flag.Short, flag)
 		f.setNamesToMap(&f.shortLong, flag.Long, flag)
 		name = flag.Name
@@ -93,7 +94,7 @@ func (f *FlagSet) OptOpt(opt Flag) *Flag {
 	}
 
 	if buf.Len() > 0 {
-		opt.isOption = true
+		opt.isOptOpt = true
 		opt.Name = buf.String()
 	}
 

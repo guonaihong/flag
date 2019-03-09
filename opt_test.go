@@ -10,7 +10,7 @@ func TestOptOpt(t *testing.T) {
 	lines := fs.OptOpt(
 		Flag{
 			Regex: `^\d+$`,
-			Short: []string{"l"},
+			Short: []string{"n"},
 			Long:  []string{"lines"},
 			Usage: "print the first NUM lines instead of the first 10;" +
 				"with the leading '-', print all but the last" +
@@ -32,6 +32,11 @@ func TestOptOpt(t *testing.T) {
 	fs.Parse([]string{"-3"})
 	if *lines != 3 {
 		t.Errorf("flag was not set by -3, the actual value is (%d)\n", *lines)
+	}
+
+	fs.Parse([]string{"-n", "11"})
+	if *lines != 11 {
+		t.Errorf("flag was not set by -11, the actual value is (%d)\n", *lines)
 	}
 }
 

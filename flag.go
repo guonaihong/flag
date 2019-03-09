@@ -367,7 +367,7 @@ type Flag struct {
 	Regex    string
 	Short    []string
 	Long     []string
-	isOption bool
+	isOptOpt bool
 }
 
 // sortFlags returns the flags as a slice in lexicographical sorted order.
