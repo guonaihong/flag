@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func TestOptOpt(t *testing.T) {
-	fs := NewFlagSet("grep", ContinueOnError)
+func newFlagSet() (*FlagSet, *int) {
+	fs := NewFlagSet("tail", ContinueOnError)
 	lines := fs.OptOpt(
 		Flag{
 			Regex: `^\d+$`,
@@ -15,28 +15,48 @@ func TestOptOpt(t *testing.T) {
 			Usage: "print the first NUM lines instead of the first 10;" +
 				"with the leading '-', print all but the last" +
 				"NUM lines of each file"}).
-		Flags(RegexKeyIsValue).
+		Flags(RegexKeyIsValue | PosixShort).
 		NewInt(0)
+	return fs, lines
+}
 
+func TestOptOpt(t *testing.T) {
+
+	fs, lines := newFlagSet()
 	fs.Parse([]string{"-1"})
 
 	if *lines != 1 {
 		t.Errorf("flag was not set by -1, the actual value is (%d)\n", *lines)
 	}
 
+	fs, lines = newFlagSet()
 	fs.Parse([]string{"-2"})
 	if *lines != 2 {
 		t.Errorf("flag was not set by -1, the actual value is (%d)\n", *lines)
 	}
 
+	fs, lines = newFlagSet()
 	fs.Parse([]string{"-3"})
 	if *lines != 3 {
 		t.Errorf("flag was not set by -3, the actual value is (%d)\n", *lines)
 	}
 
+	fs, lines = newFlagSet()
 	fs.Parse([]string{"-n", "11"})
 	if *lines != 11 {
 		t.Errorf("flag was not set by -11, the actual value is (%d)\n", *lines)
+	}
+
+	fs, lines = newFlagSet()
+	fs.Parse([]string{"-n+3"})
+	if *lines != 3 {
+		t.Fatalf("flag was not set by +3, the actual value is (%d)\n", *lines)
+	}
+
+	fs, lines = newFlagSet()
+	fs.Parse([]string{"-n4"})
+	if *lines != 4 {
+		t.Fatalf("flag was not set by 4, the actual value is (%d)\n", *lines)
 	}
 }
 

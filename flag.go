@@ -1029,13 +1029,11 @@ func parseNameValue(name string) (string, bool, string) {
 }
 
 func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
-	var formals []map[string]*Flag
-	formals = append(formals, f.formal)
-	formals = append(formals, f.shortLong)
-	formals = append(formals, f.regex)
+	formals := make([]map[string]*Flag, 0, 3)
+	formals = append(formals, f.formal, f.shortLong, f.regex)
 
 	for k, formal := range formals {
-		if k == 2 && len(formal) > 0 { //range regexp map
+		if k == len(formals)-1 && len(formal) > 0 { //range regexp map
 			for k, v := range formal {
 				//todo Compile and the full Regexp interface.
 				matched, _ := regexp.Match(k, []byte(name))
@@ -1138,6 +1136,7 @@ func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, err
 	count := 0
 	for i := range name {
 		newName := string(name[i])
+
 		flag, seen, err := f.getFlag(newName)
 		if err != nil {
 			continue
@@ -1151,6 +1150,7 @@ func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, err
 		value := ""
 		isBool := true
 
+		// tail -c+3
 		if fv, ok := flag.Value.(boolFlag); !(ok && fv.IsBoolFlag()) {
 
 			if i+1 != len(name) {
@@ -1159,6 +1159,11 @@ func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, err
 			}
 
 			isBool = false
+		}
+
+		if flag.flags&RegexKeyIsValue > 0 {
+			value = name[i:]
+			hasValue = true
 		}
 
 		seen, err = f.setFlag(flag, newName, hasValue, value)
