@@ -44,6 +44,7 @@ func (f *FlagSet) flagVar(flag *Flag) {
 		if ok {
 			f.setNamesToMap(&f.shortLong, names, flag)
 		}
+		flag.Name = name
 	}
 
 	_, alreadythere := f.formal[name]
