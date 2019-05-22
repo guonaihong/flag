@@ -2,6 +2,8 @@ package flag
 
 import (
 	"bytes"
+	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -113,6 +115,97 @@ func (f *Flag) Flags(flag Flags) *Flag {
 		f.parent.openPosixShort = true
 	}
 	return f
+}
+
+type InvalidVarError struct {
+	Type reflect.Type
+}
+
+func (e *InvalidVarError) Error() string {
+	if e.Type == nil {
+		return "flag: Var(nil)"
+	}
+
+	if e.Type.Kind() != reflect.Ptr {
+		return "flag: Var(non-pointer " + e.Type.String() + ")"
+	}
+
+	return "json: Var(nil " + e.Type.String() + ")"
+}
+
+var stringSliceType = reflect.TypeOf([]string{})
+
+var int64SliceType = reflect.TypeOf([]int64{})
+
+var durationType = reflect.TypeOf(time.Time{})
+
+func (f *Flag) setVar(defValue, p reflect.Value) {
+	vt := p.Elem().Type()
+	v := p.Elem().Type()
+
+	switch v.Kind() {
+	case reflect.String:
+		f.Value = newStringValue(defValue.Interface().(string), p.Interface().(*string))
+	case reflect.Bool:
+		f.Value = newBoolValue(defValue.Interface().(bool), p.Interface().(*bool))
+	case reflect.Uint:
+		f.Value = newUintValue(defValue.Interface().(uint), p.Interface().(*uint))
+	case reflect.Uint64:
+		f.Value = newUint64Value(defValue.Interface().(uint64), p.Interface().(*uint64))
+	case reflect.Int:
+		f.Value = newIntValue(defValue.Interface().(int), p.Interface().(*int))
+	case reflect.Int64:
+		f.Value = newInt64Value(defValue.Interface().(int64), p.Interface().(*int64))
+	case reflect.Float64:
+		f.Value = newFloat64Value(defValue.Interface().(float64), p.Interface().(*float64))
+	case reflect.Slice:
+		if stringSliceType == vt {
+			f.Value = newStringSliceValue(defValue.Interface().([]string), p.Interface().(*[]string))
+		} else if int64SliceType == vt {
+			f.Value = newInt64SliceValue(defValue.Interface().([]int64), p.Interface().(*[]int64))
+		} else {
+			panic("unkown type")
+		}
+	default:
+		if durationType == vt {
+			f.Value = newDurationValue(defValue.Interface().(time.Duration), p.Interface().(*time.Duration))
+		} else {
+			panic("unkown type")
+		}
+	}
+
+	f.parent.flagVar(f)
+}
+
+func checkValue(p, defValue interface{}, rv reflect.Value) {
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		p := &InvalidVarError{reflect.TypeOf(p)}
+		panic(p.Error())
+	}
+
+	if reflect.TypeOf(defValue) != rv.Elem().Type() {
+		panic(fmt.Sprintf("defvalue type is %t: value type is %t\n",
+			reflect.TypeOf(defValue), rv.Elem().Type()))
+	}
+}
+
+func (f *Flag) Var(p interface{}) {
+	rv := reflect.ValueOf(p)
+
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		p := &InvalidVarError{reflect.TypeOf(p)}
+		panic(p.Error())
+	}
+
+	f.setVar(reflect.Zero(rv.Elem().Type()), rv)
+}
+
+func (f *Flag) DefaultVar(p, defValue interface{}) {
+	rv := reflect.ValueOf(p)
+
+	checkValue(p, defValue, rv)
+
+	f.setVar(reflect.ValueOf(defValue), rv)
 }
 
 func (f *Flag) NewBool(defValue bool) *bool {
