@@ -1029,13 +1029,13 @@ func parseNameValue(name string) (string, bool, string) {
 }
 
 func (f *FlagSet) getFlag(name string) (*Flag, bool, error) {
-	formals := make([]map[string]*Flag, 0, 3)
+	formals := make([]map[string]*Flag, 0, 4)
 	formals = append(formals, f.formal, f.shortLong, f.regex)
 
 	for k, formal := range formals {
 		if k == len(formals)-1 && len(formal) > 0 { //range regexp map
 			for k, v := range formal {
-				//todo Compile and the full Regexp interface.
+				//TODO: Compile and the full Regexp interface.
 				matched, _ := regexp.Match(k, []byte(name))
 				if matched {
 					return v, true, nil
@@ -1132,7 +1132,7 @@ func (f *FlagSet) getName(numMinuses *int, name *string, flags Flags) (bool, boo
 	return true, true, nil
 }
 
-func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, error) {
+func (f *FlagSet) setPosixShortOpt(numMinuses int, name string) (bool, bool, error) {
 	count := 0
 	for i := range name {
 		newName := string(name[i])
@@ -1185,6 +1185,24 @@ func (f *FlagSet) getPosixShortOpt(numMinuses int, name string) (bool, bool, err
 	return true, true, nil
 }
 
+func (f *FlagSet) setPosix(seen bool, err error, numMinuses int, name string) (bool, bool, error) {
+	if err == ErrHelp {
+		return false, false, err
+	}
+
+	if !f.openPosixShort {
+		return false, seen, err
+	}
+
+	if numMinuses == 1 {
+		next, seen, err := f.setPosixShortOpt(numMinuses, name)
+		if !next {
+			return next, seen, err
+		}
+	}
+	return false, false, f.failf("%s", err.Error())
+}
+
 // parseOne parses one flag. It reports whether a flag was seen.
 func (f *FlagSet) parseOne() (bool, error) {
 
@@ -1205,21 +1223,9 @@ func (f *FlagSet) parseOne() (bool, error) {
 	)
 
 	if flag, seen, err0 = f.getFlag(name); err0 != nil {
-		if err0 == ErrHelp {
-			return false, err0
-		}
-
-		if !f.openPosixShort {
+		if next, seen, err0 = f.setPosix(seen, err0, numMinuses, name); !next {
 			return seen, err0
 		}
-
-		if numMinuses == 1 {
-			next, seen, err := f.getPosixShortOpt(numMinuses, name)
-			if !next {
-				return seen, err
-			}
-		}
-		return false, f.failf("%s", err0.Error())
 	}
 
 try:
@@ -1240,7 +1246,9 @@ try:
 				name, hasValue, value = parseNameValue(name)
 				//fmt.Printf("---> name(%s), hasValue(%t), value(%s) args(%s)\n", name, hasValue, value, f.args)
 				if flag, seen, err0 = f.getFlag(name); err0 != nil {
-					return seen, f.failf("%s", err0.Error())
+					if next, seen, err0 = f.setPosix(seen, err0, numMinuses, name); !next {
+						return seen, err0
+					}
 				}
 
 				f.args = f.args[1:]

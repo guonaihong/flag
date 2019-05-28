@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+//env GOPATH=`pwd` go test -test.run=^TestOpt github.com/guonaihong/flag  -count=1 -v
+
 func newFlagSet() (*FlagSet, *int) {
 	fs := NewFlagSet("tail", ContinueOnError)
 	lines := fs.OptOpt(
@@ -60,7 +62,7 @@ func TestOptOpt(t *testing.T) {
 	}
 }
 
-func TestPosixShortString(t *testing.T) {
+func TestOptPosixShortString(t *testing.T) {
 
 	var ignoreCase *bool
 	var afterContext *string
@@ -94,7 +96,7 @@ func TestPosixShortString(t *testing.T) {
 	}
 }
 
-func TestPosixShortBool(t *testing.T) {
+func TestOptPosixShortBool(t *testing.T) {
 	fs := NewFlagSet("cat", ContinueOnError)
 	showNonprinting := fs.Opt("v, show-nonprinting", "use ^ and M- notation, except for LFD and TAB").
 		Flags(PosixShort).NewBool(false)
@@ -159,6 +161,32 @@ func TestOptHelp(t *testing.T) {
 	err = fs.Parse([]string{"-h"})
 	if err != ErrHelp {
 		t.Fatal("expected no error; got ", err)
+	}
+}
+
+// https://github.com/guonaihong/flag/issues/1
+type option struct {
+	Color   bool
+	Version bool
+	Query   []string
+}
+
+func TestOptGreedyMode2(t *testing.T) {
+	fs := NewFlagSet("test-greedy", ContinueOnError)
+
+	o := option{}
+	fs.Opt("c, color", "color").Flags(PosixShort).Var(&o.Color)
+	fs.Opt("v, version", "version").Flags(PosixShort).Var(&o.Version)
+	fs.Opt("q, query", "query").Flags(GreedyMode).Var(&o.Query)
+
+	fs.Parse([]string{"-q", "hello", "world", "12346", "-cv"})
+
+	if !o.Color || !o.Version {
+		t.Errorf("got (%t:%t : want(true:true)\n", o.Color, o.Version)
+	}
+
+	if len(o.Query) != 3 || o.Query[0] != "hello" && o.Query[1] != "world" && o.Query[2] != "12346" {
+		t.Errorf("got (%s): want('hello', 'world')\n", o.Query)
 	}
 }
 
