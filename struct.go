@@ -14,6 +14,26 @@ func (f *FlagSet) parseStruct(v reflect.Value) {
 		if sf.PkgPath != "" && !sf.Anonymous {
 			continue
 		}
+
+		sv = v.Field(i)
+		if sv.Kind() == reflect.Struct {
+			f.parseStruct(sv)
+			continue
+		}
+
+		opt := sf.Tag.Get("opt")
+		usage := sf.Tag.Get("usage")
+		defValue := sf.tag.Get("defvalue")
+
+		if opt == "" || usage == "" {
+			continue
+		}
+
+		if defValue != "" {
+			f.Opt(opt, usage).DefValue()
+		} else {
+			f.Opt(opt, usage).Var()
+		}
 	}
 }
 
