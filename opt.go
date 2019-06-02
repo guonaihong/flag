@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+var stringSliceType = reflect.TypeOf([]string{})
+
+var int64SliceType = reflect.TypeOf([]int64{})
+
+var durationType = reflect.TypeOf(time.Duration(1))
+
 func (f *FlagSet) setNamesToMap(m *map[string]*Flag, names []string, flag *Flag) {
 
 	initFormal(m)
@@ -133,12 +139,6 @@ func (e *InvalidVarError) Error() string {
 	return "json: Var(nil " + e.Type.String() + ")"
 }
 
-var stringSliceType = reflect.TypeOf([]string{})
-
-var int64SliceType = reflect.TypeOf([]int64{})
-
-var durationType = reflect.TypeOf(time.Time{})
-
 func (f *Flag) setVar(defValue, p reflect.Value) {
 	vt := p.Elem().Type()
 	v := p.Elem().Type()
@@ -155,7 +155,11 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 	case reflect.Int:
 		f.Value = newIntValue(defValue.Interface().(int), p.Interface().(*int))
 	case reflect.Int64:
-		f.Value = newInt64Value(defValue.Interface().(int64), p.Interface().(*int64))
+		if durationType == vt {
+			f.Value = newDurationValue(defValue.Interface().(time.Duration), p.Interface().(*time.Duration))
+		} else {
+			f.Value = newInt64Value(defValue.Interface().(int64), p.Interface().(*int64))
+		}
 	case reflect.Float64:
 		f.Value = newFloat64Value(defValue.Interface().(float64), p.Interface().(*float64))
 	case reflect.Slice:
@@ -167,11 +171,7 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 			panic("unkown type")
 		}
 	default:
-		if durationType == vt {
-			f.Value = newDurationValue(defValue.Interface().(time.Duration), p.Interface().(*time.Duration))
-		} else {
-			panic("unkown type")
-		}
+		panic("unkown type")
 	}
 
 	f.parent.flagVar(f)
@@ -184,7 +184,7 @@ func checkValue(p, defValue interface{}, rv reflect.Value) {
 	}
 
 	if reflect.TypeOf(defValue) != rv.Elem().Type() {
-		panic(fmt.Sprintf("defvalue type is %t: value type is %t\n",
+		panic(fmt.Sprintf("defvalue type is %v: value type is %v\n",
 			reflect.TypeOf(defValue), rv.Elem().Type()))
 	}
 }
