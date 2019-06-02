@@ -278,8 +278,6 @@ type TestOption struct {
 func main() {
 	option := TestOption{}
 
-	// DefaultVar是带默认值的泛型函数
-	// Var是不带默认值的泛型函数
 	flag.ParseStruct(&option)
 
 	fmt.Printf("%#v\n", option)
