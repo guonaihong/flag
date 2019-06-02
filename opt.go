@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+var stringSliceType = reflect.TypeOf([]string{})
+
+var int64SliceType = reflect.TypeOf([]int64{})
+
+var durationType = reflect.TypeOf(time.Time{})
+
 func (f *FlagSet) setNamesToMap(m *map[string]*Flag, names []string, flag *Flag) {
 
 	initFormal(m)
@@ -132,12 +138,6 @@ func (e *InvalidVarError) Error() string {
 
 	return "json: Var(nil " + e.Type.String() + ")"
 }
-
-var stringSliceType = reflect.TypeOf([]string{})
-
-var int64SliceType = reflect.TypeOf([]int64{})
-
-var durationType = reflect.TypeOf(time.Time{})
 
 func (f *Flag) setVar(defValue, p reflect.Value) {
 	vt := p.Elem().Type()
