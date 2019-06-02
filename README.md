@@ -10,6 +10,7 @@ flag库是标准库的增强版本,让你的命令行程序飞起来
 * [posix风格](#posix风格)
 * [子母命令](#子母命令)
 * [泛型接口函数](#泛型接口函数)
+* [绑定结构体](#绑定结构体)
 
 #### 兼容go标准库 
 ```golang
@@ -245,6 +246,41 @@ func main() {
 	flag.Opt("i64s, int64s", "test []int64").DefaultVar(&option.Int64s, []int64{})
 	flag.Opt("i2", "test int2").Var(&option.Int2)
 	flag.Parse()
+
+	fmt.Printf("%#v\n", option)
+}
+
+// 运行
+// go run main.go -i 3 -i64 64 -i64s 64 -i64s 1 -i64s 2 -i64s 3 -s a -s b -s c
+// 输出
+// main.TestOption{Int:3, Int64:64, Strings:[]string{"a", "b", "c"}, Int64s:[]int64{64, 1, 2, 3}, Int2:0}
+```
+
+#### 绑定结构体
+```golang
+package main
+
+import (
+	"fmt"
+	"github.com/guonaihong/flag"
+	_ "os"
+)
+
+type TestOption struct {
+	Int     int      `opt:"i, int" usage:"test int"`
+	Int64   int64    `opt:"i64, int64" usage:"test int64"`
+	Strings []string `opt:"s, strings" usage:"test []string"`
+	Int64s  []int64  `opt:"i64s, int64s" usage:"test []int64"`
+
+	Int2 int `opt:"i2" usage:"test int2"`
+}
+
+func main() {
+	option := TestOption{}
+
+	// DefaultVar是带默认值的泛型函数
+	// Var是不带默认值的泛型函数
+	flag.ParseStruct(&option)
 
 	fmt.Printf("%#v\n", option)
 }

@@ -1,10 +1,12 @@
 package flag
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func parseFlags(s string) (f Flags) {
@@ -29,9 +31,10 @@ func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}
 			sep = ","
 		}
 
-		if v.Type() == stringSliceType {
+		switch v.Type() {
+		case stringSliceType:
 			rv = strings.Split(defValue, sep)
-		} else if v.Type() == int64SliceType {
+		case int64SliceType:
 			rs := strings.Split(defValue, sep)
 			int64s := make([]int64, len(rs))
 			for k, v := range rs {
@@ -41,8 +44,9 @@ func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}
 				}
 				int64s[k] = i64
 			}
-		} else {
-			panic("unkown slice type")
+			rv = int64s
+		default:
+			panic(fmt.Sprintf("unkown slice type:%v #support []stirng and []int64 types", v.Type()))
 		}
 
 	case reflect.Uint, reflect.Uint64:
@@ -56,7 +60,11 @@ func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}
 	case reflect.Int:
 		rv, err = strconv.Atoi(defValue)
 	case reflect.Int64:
-		rv, err = strconv.ParseInt(defValue, 10, 0)
+		if v.Type() == durationType {
+			rv, err = time.ParseDuration(defValue)
+		} else {
+			rv, err = strconv.ParseInt(defValue, 10, 0)
+		}
 	case reflect.Float64:
 		rv, err = strconv.ParseFloat(defValue, 0)
 	case reflect.Bool:
@@ -70,6 +78,7 @@ func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}
 	if err != nil {
 		panic(err.Error())
 	}
+
 	return
 }
 
