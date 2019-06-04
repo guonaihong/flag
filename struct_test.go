@@ -6,8 +6,16 @@ import (
 	"time"
 )
 
+type structOptiont1 struct {
+	Y int `opt:"y,year" defValue:"2019" usage:"test y"`
+}
+
+type structOptiont2 struct {
+	M int `opt:"M,month" usage:"test m"`
+}
+
 type structOption struct {
-	Header       []string      `opt:"h, header" flags:"posix" usage:"http header"`
+	Header       []string      `opt:"H, header" flags:"posix" usage:"http header"`
 	MaxThreads   int           `opt:"m, max" flags:"posix" defValue:"1" usage:"max threads"`
 	Packet       []string      `opt:"p, packet" flags:"greedy" usage:"websocket packet"`
 	Debug        bool          `opt:"d, debug" defValue:"true" usage:"open debug mode"`
@@ -21,6 +29,8 @@ type structOption struct {
 	StringSlice2 []string      `opt:"ss2, string-slice2" defValue:"aa,bb#cc,dd" sep:"#" usage:"string slice type"`
 	Int64Slice   []int64       `opt:"i64s, int64-slice" defValue:"1,2" usage:"int slice type"`
 	T            time.Duration `opt:"t, time" defValue:"1s" usage:"test time.Duration type"`
+	structOptiont1
+	structOptiont2
 }
 
 // Test Module-name func-name
@@ -29,7 +39,7 @@ func TestStructParse(t *testing.T) {
 
 	o := structOption{}
 
-	fs.ParseStruct([]string{"-h", "appkey:value1", "-h", "user:username", "-h", "passwd:passwd", "-m", "10", "-p", "@./test.data"}, &o)
+	fs.ParseStruct([]string{"-H", "appkey:value1", "-H", "user:username", "-H", "passwd:passwd", "-m", "10", "-p", "@./test.data", "-M", "6"}, &o)
 
 	if o.MaxThreads != 10 {
 		t.Errorf("maxThreads got %d want 10, %p\n", o.MaxThreads, &o.MaxThreads)
@@ -123,5 +133,13 @@ func TestStructParse(t *testing.T) {
 
 	if int64(o.T) != int64(time.Second) {
 		t.Errorf("got %v want 1s\n", o.T)
+	}
+
+	if o.Y != 2019 {
+		t.Errorf("got %v want 2019\n", o.Y)
+	}
+
+	if o.M != 6 {
+		t.Errorf("got %v want 6\n", o.M)
 	}
 }
