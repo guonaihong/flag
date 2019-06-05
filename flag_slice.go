@@ -2,7 +2,38 @@ package flag
 
 import (
 	"encoding/json"
+	"strconv"
 )
+
+type boolSlice []bool
+
+func newBoolSliceValue(val []bool, p *[]bool) *boolSlice {
+	*p = val
+	return (*boolSlice)(p)
+}
+
+func (b *boolSlice) Set(s string) error {
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+
+	*b = append(*b, v)
+	return nil
+}
+
+func (b *boolSlice) String() string {
+	all, err := json.Marshal(b)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return string(all)
+}
+
+func (b *boolSlice) Get() interface{} {
+	return []bool(*b)
+}
 
 type int64SliceValue []int64
 

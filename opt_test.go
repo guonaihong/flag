@@ -295,3 +295,55 @@ func TestOptParse(t *testing.T) {
 	}
 
 }
+
+func testOptBoolSlice1(t *testing.T) {
+	fs := NewFlagSet("test-bool-slice", ContinueOnError)
+	var bs []bool
+
+	fs.Opt("v", "test bool slice").Var(&bs)
+
+	args := []string{"-v"}
+
+	fs.Parse(args)
+
+	if len(bs) != 1 {
+		t.Errorf("got len %d want len 1\n", len(bs))
+	}
+}
+
+func testOptBoolSlice2(t *testing.T) {
+	fs := NewFlagSet("test-bool-slice", ContinueOnError)
+	var bs []bool
+
+	fs.Opt("v", "test bool slice").Var(&bs)
+
+	args := []string{"-v", "-v"}
+
+	fs.Parse(args)
+
+	if len(bs) != 2 {
+		t.Errorf("got len %d want len 2\n", len(bs))
+	}
+}
+
+// todo debug
+func testOptBoolSlice3(t *testing.T) {
+	fs := NewFlagSet("test-bool-slice", ContinueOnError)
+	var bs []bool
+
+	fs.Opt("v", "test bool slice").Flags(PosixShort).Var(&bs)
+
+	args := []string{"-vvv"}
+
+	fs.Parse(args)
+
+	if len(bs) != 3 {
+		t.Errorf("got len %d want len 3\n", len(bs))
+	}
+}
+
+func TestOptBoolSlice(t *testing.T) {
+	testOptBoolSlice1(t)
+	testOptBoolSlice2(t)
+	testOptBoolSlice3(t)
+}
