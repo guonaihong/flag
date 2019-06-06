@@ -76,7 +76,7 @@ func main() {
 ```
 
 #### posix风格
-* 命令粘合
+* 命令组合
 ```golang
 package main
 
@@ -125,7 +125,52 @@ func main() {
 // 输出
 // []string{"appkey:test", "hello:world", "love:you"}
 ```
+* -vvv 或者-v -v -v
+```go
 
+package main
+
+import (
+        "fmt"
+        "github.com/guonaihong/flag"
+)
+
+func main() {
+        var bs []bool
+
+        flag.Opt("v", "test bool slice").Flags(flag.PosixShort).Var(&bs)
+
+        flag.Parse()
+
+        switch len(bs) {
+        case 0:
+                fmt.Printf("No verbose info\n")
+        case 1:
+                fmt.Printf("Some verbose info\n")
+        case 2:
+                fmt.Printf("Tons of verbose info\n")
+        default:
+                fmt.Printf("别闹了\n")
+        }
+
+}
+
+// 运行
+// go run main.go -v
+// 输出
+// Some verbose info
+
+// 运行
+// go run main.go -vv
+// 输出
+// Tons of verbose info
+
+// 运行
+// go run main.go -vvv
+// 输出
+// 别闹了
+
+```
 #### 子母命令
 如果要实现一个主命令包含3个子命令(http, websocket, tcp)，其中http子命令又包含5个命令行选项，可以使用如下用法
 ``` golang

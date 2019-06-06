@@ -893,14 +893,8 @@ func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string)
 	}
 
 	if fv, ok := flag.Value.(*boolSlice); ok {
-		if hasValue {
-			if err := fv.Set(value); err != nil {
-				return false, f.failf("invalid boolean value %q for -%s: %v", value, name, err)
-			}
-		} else {
-			if err := fv.Set("true"); err != nil {
-				return false, f.failf("invalid boolean flag %s: %v", name, err)
-			}
+		if err := fv.Set("true"); err != nil {
+			return false, f.failf("invalid boolean flag %s: %v", name, err)
 		}
 		return true, nil
 	}
