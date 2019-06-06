@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var boolSliceType = reflect.TypeOf([]bool{})
+
 var stringSliceType = reflect.TypeOf([]string{})
 
 var int64SliceType = reflect.TypeOf([]int64{})
@@ -163,11 +165,14 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 	case reflect.Float64:
 		f.Value = newFloat64Value(defValue.Interface().(float64), p.Interface().(*float64))
 	case reflect.Slice:
-		if stringSliceType == vt {
+		switch vt {
+		case stringSliceType:
 			f.Value = newStringSliceValue(defValue.Interface().([]string), p.Interface().(*[]string))
-		} else if int64SliceType == vt {
+		case int64SliceType:
 			f.Value = newInt64SliceValue(defValue.Interface().([]int64), p.Interface().(*[]int64))
-		} else {
+		case boolSliceType:
+			f.Value = newBoolSliceValue(defValue.Interface().([]bool), p.Interface().(*[]bool))
+		default:
 			panic("unkown type")
 		}
 	default:
@@ -274,6 +279,13 @@ func (f *Flag) NewInt64Slice(defValue []int64) *[]int64 {
 func (f *Flag) NewStringSlice(defValue []string) *[]string {
 	p := new([]string)
 	f.Value = newStringSliceValue(defValue, p)
+	f.parent.flagVar(f)
+	return p
+}
+
+func (f *Flag) NewBoolSlice(defValue []bool) *[]bool {
+	p := new([]bool)
+	f.Value = newBoolSliceValue(defValue, p)
 	f.parent.flagVar(f)
 	return p
 }
