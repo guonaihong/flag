@@ -113,6 +113,12 @@ const (
 	RegexKeyIsValue
 )
 
+// alias
+const (
+	Posix  = PosixShort
+	Greedy = GreedyMode
+)
+
 // ErrorHandling defines how FlagSet.Parse behaves if the parse fails.
 type ErrorHandling int
 
@@ -155,6 +161,10 @@ type Flag struct {
 	Usage    string // help message
 	Value    Value  // value as set
 	DefValue string // default value (as text); for usage message
+
+	pointer interface{}
+	// 如果命令行匹配到Name，并且设置NotValue值，则使用MatchValue里面的值
+	matchValue interface{} // (flags & NotValue) == NotValue
 
 	parent *FlagSet
 	flags  Flags
@@ -878,7 +888,13 @@ func (f *FlagSet) setFlag(flag *Flag, name string, hasValue bool, value string) 
 	return true, nil
 }
 
+// 核心函数
 func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string) (bool, error) {
+	if flag.flags&NotValue > 0 {
+		reflect.Value(flag.pointer).Elem().Set(flag.matchValue)
+		return
+	}
+
 	if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
 		if hasValue {
 			if err := fv.Set(value); err != nil {

@@ -138,7 +138,7 @@ func (e *InvalidVarError) Error() string {
 		return "flag: Var(non-pointer " + e.Type.String() + ")"
 	}
 
-	return "json: Var(nil " + e.Type.String() + ")"
+	return "flag: Var(nil " + e.Type.String() + ")"
 }
 
 func (f *Flag) setVar(defValue, p reflect.Value) {
@@ -146,6 +146,12 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 	v := p.Elem().Type()
 
 	switch v.Kind() {
+	case reflect.Uint8:
+		if vt == reflect.TypeOf(byte(0)) {
+			f.Value = newByteValue(defValue.Interface().(byte), p.Interface().(*byte))
+		} else {
+			panic("unkown type")
+		}
 	case reflect.String:
 		f.Value = newStringValue(defValue.Interface().(string), p.Interface().(*string))
 	case reflect.Bool:

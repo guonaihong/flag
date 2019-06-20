@@ -14,13 +14,59 @@ func parseFlags(s string) (f Flags) {
 	fs := strings.Split(s, "|")
 	for _, v := range fs {
 		switch v {
-		case "posix":
+		case "posix", "Posix":
 			f |= PosixShort
-		case "greedy":
+		case "greedy", "Greedy":
 			f |= GreedyMode
+		case "notValue", "NotValue":
+			f |= NotValue
 		}
 	}
 	return
+}
+
+func parseByte(s string) (b byte, err error) {
+
+	switch s {
+	case `\a`:
+		b = '\a'
+	case `\b`:
+		b = '\b'
+	case `\e`:
+		b = '\x1B'
+	case `\f`:
+		b = '\f'
+	case `\n`:
+		b = '\n'
+	case `\r`:
+		b = '\r'
+	case `\v`:
+		b = '\v'
+
+	default:
+		var u64 uint64
+		switch {
+		case strings.HasPrefix(s, "x"):
+			if u64, err = strconv.ParseUint(s[1:], 16, 16); err != nil {
+				return 0, err
+			}
+
+		case strings.HasPrefix(s, "0"):
+			if u64, err = strconv.ParseUint(s[1:], 8, 16); err != nil {
+				return 0, err
+			}
+		default:
+			if u64, err = strconv.ParseUint(s[1:], 10, 16); err != nil {
+				return 0, err
+			}
+
+		}
+
+		b = byte(u64)
+	}
+
+	return
+
 }
 
 func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}) {
@@ -71,6 +117,12 @@ func parseDefValue(v reflect.Value, defValue string, sep string) (rv interface{}
 		rv, err = strconv.ParseBool(defValue)
 	case reflect.String:
 		rv = defValue
+	case reflect.Uint8:
+		if reflect.TypeOf(byte(0)) == v.Type() {
+			rv, err = parseByte(defValue)
+		} else {
+			panic("invalid type")
+		}
 	default:
 		panic("invalid type")
 	}
