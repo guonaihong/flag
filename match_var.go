@@ -1,11 +1,16 @@
 package flag
 
+import (
+	"fmt"
+	"reflect"
+)
+
 func matchCheckValue(p, matchValue interface{}, pValue reflect.Value) {
 	if pValue.Kind() != reflect.Ptr || pValue.IsNil() {
-		panic(InvalidVarError{reflect.TypeOf(p)}.Error())
+		panic((&InvalidVarError{reflect.TypeOf(p)}).Error())
 	}
 
-	if reflect.TypeOf(matchValue) != rv.Elem().Type() {
+	if reflect.TypeOf(matchValue) != pValue.Elem().Type() {
 		panic(fmt.Sprintf("matchvalue type is %v: value type is %v\n",
 			reflect.TypeOf(matchValue), pValue.Elem().Type()))
 	}
@@ -14,7 +19,7 @@ func matchCheckValue(p, matchValue interface{}, pValue reflect.Value) {
 func (f *Flag) MatchVar(p, matchValue interface{}) {
 	rv := reflect.ValueOf(p)
 
-	f.flag |= NotValue
+	f.flags |= NotValue
 
 	f.pointer = p
 	f.matchValue = matchValue

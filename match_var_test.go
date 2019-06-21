@@ -1,27 +1,60 @@
 package flag
 
 import (
+	"reflect"
 	"testing"
+	"time"
 )
 
 type testMatch struct {
-	Delimiter byte
-	Limit     int
+	optName string
+	help    string
+	ptr     interface{}
+	want    interface{}
 }
 
 func TestMatchVar(t *testing.T) {
 	fs := NewFlagSet("match var test", ContinueOnError)
 
-	t := testMatch{
-		Delimiter: '\n',
-		Limit:     100,
+	var (
+		bt        byte
+		s         string
+		b         bool
+		ui        uint
+		u64       uint64
+		i         int
+		i64       int64
+		d         time.Duration
+		f64       float64
+		strSlice  []string
+		intSlice  []int
+		boolSlice []bool
+	)
+
+	tv := []testMatch{
+		{"0, null", "test byte", &bt, byte('\n')},
+		{"s", "test string", &s, "open debug"},
+		{"b", "test bool", &b, true},
+		{"ui", "test uint", &ui, uint(314)},
+		{"u64", "test uint64", &u64, uint64(314)},
+		{"i", "test int", &i, 0xff},
+		{"i64", "test int 64", &i64, int64(33)},
+		{"d", "test int", &d, time.Second},
+		{"f64", "test float 64", &f64, 3.14},
+		{"strSlice", "test string slice", &strSlice, []string{"1", "2", "3"}},
+		{"intSlice", "test int slice", &intSlice, []int{1, 2, 3}},
+		{"boolSlice", "test bool slice", &boolSlice, []bool{true, true, true}},
 	}
 
-	command.Opt("0, null", "end each output line with NUL, not newline").
-		Flags(Posix).MatchVar(&t.Delimiter)
+	for k := range tv {
+		fs.Opt(tv[k].optName, tv[k].help).Flags(Posix).MatchVar(tv[k].ptr, tv[k].want)
+	}
 
-	command.Opt("limit", "test int").
-		Flags(Posix).MatchVar(&t.Limit)
+	for k := range tv {
+		if !reflect.DeepEqual(reflect.ValueOf(tv[k].ptr).Elem().Interface(), tv[k].want) {
+			t.Errorf("parseBaseTypeVar %T fail got:%v, want:%v\n", tv[k].ptr, tv[k].ptr, tv[k].want)
+		}
+	}
 
 	fs.Parse([]string{"-0", "-limit"})
 }

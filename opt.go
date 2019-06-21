@@ -179,7 +179,7 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 		case boolSliceType:
 			f.Value = newBoolSliceValue(defValue.Interface().([]bool), p.Interface().(*[]bool))
 		default:
-			panic("unkown type")
+			panic(fmt.Sprintf("%T:unkown type", vt))
 		}
 	default:
 		panic("unkown type")

@@ -111,6 +111,7 @@ const (
 	PosixShort Flags = 1 << iota
 	GreedyMode
 	RegexKeyIsValue
+	NotValue
 )
 
 // alias
@@ -891,8 +892,8 @@ func (f *FlagSet) setFlag(flag *Flag, name string, hasValue bool, value string) 
 // 核心函数
 func (f *FlagSet) setValue(flag *Flag, name string, hasValue bool, value string) (bool, error) {
 	if flag.flags&NotValue > 0 {
-		reflect.Value(flag.pointer).Elem().Set(flag.matchValue)
-		return
+		reflect.ValueOf(flag.pointer).Elem().Set(reflect.ValueOf(flag.matchValue))
+		return true, nil
 	}
 
 	if fv, ok := flag.Value.(boolFlag); ok && fv.IsBoolFlag() { // special case: doesn't need an arg
