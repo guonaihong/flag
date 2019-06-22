@@ -7,7 +7,7 @@ flag库是标准库的增强版本,让你的命令行程序飞起来
 * [兼容go标准库](#兼容go标准库)
 * [数组类型选项](#数组类型选项)
 * [多选项支持](#多选项支持)
-* [MatchVar][#matchvar]
+* [MatchVar](#matchvar)
 * [posix风格](#posix风格)
 * [子母命令](#子母命令)
 * [泛型接口函数](#泛型接口函数)
@@ -76,9 +76,9 @@ func main() {
 // long = hello
 ```
 #### matchvar
-详情 #9
-很多时候使用bool选项，都是命令函数传递bool选项 代码里面设置一个默认值。
-```
+详情 [#9](https://github.com/guonaihong/flag/issues/9)
+很多时候使用bool选项，都是命令行传递bool选项 代码里面设置一个默认值，如下。
+```go
 var openNull bool
 delimiter := byte('\n')
 command.Opt("0, null", "end each output line with NUL, not newline").
@@ -89,8 +89,8 @@ if openNull {
 }
 ```
 
-可以使用MatchVar函数简化类似代码
-```
+现在可以使用MatchVar函数简化类似代码，如果命令函数传递-0或者-null，delimiter的值为'\n'
+```go
 package main
 
 import (
