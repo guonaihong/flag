@@ -24,12 +24,9 @@ func (f *FlagSet) setNamesToMap(m *map[string]*Flag, names []string, flag *Flag)
 			f.alreadythereError(v)
 		}
 
-		(*m)[v] = &Flag{Name: v,
-			Usage:    flag.Usage,
-			Value:    flag.Value,
-			DefValue: flag.DefValue,
-			flags:    flag.flags,
-		}
+		newFlag := *flag
+		newFlag.Name = v
+		(*m)[v] = &newFlag
 	}
 }
 
@@ -138,7 +135,7 @@ func (e *InvalidVarError) Error() string {
 		return "flag: Var(non-pointer " + e.Type.String() + ")"
 	}
 
-	return "json: Var(nil " + e.Type.String() + ")"
+	return "flag: Var(nil " + e.Type.String() + ")"
 }
 
 func (f *Flag) setVar(defValue, p reflect.Value) {
@@ -146,6 +143,12 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 	v := p.Elem().Type()
 
 	switch v.Kind() {
+	case reflect.Uint8:
+		if vt == reflect.TypeOf(byte(0)) {
+			f.Value = newByteValue(defValue.Interface().(byte), p.Interface().(*byte))
+		} else {
+			panic("unkown type")
+		}
 	case reflect.String:
 		f.Value = newStringValue(defValue.Interface().(string), p.Interface().(*string))
 	case reflect.Bool:
@@ -173,7 +176,7 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 		case boolSliceType:
 			f.Value = newBoolSliceValue(defValue.Interface().([]bool), p.Interface().(*[]bool))
 		default:
-			panic("unkown type")
+			panic(fmt.Sprintf("%v:Unsupported type", vt))
 		}
 	default:
 		panic("unkown type")

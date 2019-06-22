@@ -34,6 +34,24 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
+// -- byte value
+type byteValue byte
+
+func newByteValue(val byte, p *byte) *byteValue {
+	*p = val
+	return (*byteValue)(p)
+}
+
+func (b *byteValue) Set(s string) error {
+	v, err := strconv.ParseUint(s, 10, 8)
+	*b = byteValue(byte(v))
+	return err
+}
+
+func (b *byteValue) Get() interface{} { return byte(*b) }
+
+func (b *byteValue) String() string { return strconv.Itoa(int(*b)) }
+
 // -- int Value
 type intValue int
 
@@ -43,7 +61,7 @@ func newIntValue(val int, p *int) *intValue {
 }
 
 func (i *intValue) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
+	v, err := strconv.ParseInt(s, 10, 8)
 	*i = intValue(v)
 	return err
 }
