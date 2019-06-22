@@ -24,12 +24,9 @@ func (f *FlagSet) setNamesToMap(m *map[string]*Flag, names []string, flag *Flag)
 			f.alreadythereError(v)
 		}
 
-		(*m)[v] = &Flag{Name: v,
-			Usage:    flag.Usage,
-			Value:    flag.Value,
-			DefValue: flag.DefValue,
-			flags:    flag.flags,
-		}
+		newFlag := *flag
+		newFlag.Name = v
+		(*m)[v] = &newFlag
 	}
 }
 
@@ -179,7 +176,7 @@ func (f *Flag) setVar(defValue, p reflect.Value) {
 		case boolSliceType:
 			f.Value = newBoolSliceValue(defValue.Interface().([]bool), p.Interface().(*[]bool))
 		default:
-			panic(fmt.Sprintf("%T:unkown type", vt))
+			panic(fmt.Sprintf("%v:Unsupported type", vt))
 		}
 	default:
 		panic("unkown type")

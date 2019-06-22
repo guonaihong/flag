@@ -27,7 +27,7 @@ func TestMatchVar(t *testing.T) {
 		d         time.Duration
 		f64       float64
 		strSlice  []string
-		intSlice  []int
+		intSlice  []int64
 		boolSlice []bool
 	)
 
@@ -42,7 +42,7 @@ func TestMatchVar(t *testing.T) {
 		{"d", "test int", &d, time.Second},
 		{"f64", "test float 64", &f64, 3.14},
 		{"strSlice", "test string slice", &strSlice, []string{"1", "2", "3"}},
-		{"intSlice", "test int slice", &intSlice, []int{1, 2, 3}},
+		{"int64Slice", "test int slice", &intSlice, []int64{1, 2, 3}},
 		{"boolSlice", "test bool slice", &boolSlice, []bool{true, true, true}},
 	}
 
@@ -50,11 +50,12 @@ func TestMatchVar(t *testing.T) {
 		fs.Opt(tv[k].optName, tv[k].help).Flags(Posix).MatchVar(tv[k].ptr, tv[k].want)
 	}
 
+	fs.Parse([]string{"-0", "-s", "-b", "-ui", "-u64", "-i", "-i64", "-d", "-f64", "-strSlice", "-int64Slice", "-boolSlice"})
+
 	for k := range tv {
 		if !reflect.DeepEqual(reflect.ValueOf(tv[k].ptr).Elem().Interface(), tv[k].want) {
-			t.Errorf("parseBaseTypeVar %T fail got:%v, want:%v\n", tv[k].ptr, tv[k].ptr, tv[k].want)
+			t.Errorf("TestMatchVar %T fail ptr:%p,got:%v, want:%v\n", tv[k].ptr, tv[k].ptr, reflect.ValueOf(tv[k].ptr).Elem().Interface(), tv[k].want)
 		}
 	}
 
-	fs.Parse([]string{"-0", "-limit"})
 }

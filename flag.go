@@ -787,7 +787,8 @@ func (f *FlagSet) Var(value Value, name string, usage string) {
 			f.shortLong[v] = &Flag{Name: v,
 				Usage:    usage,
 				Value:    value,
-				DefValue: value.String()}
+				DefValue: value.String(),
+			}
 		}
 	}
 	_, alreadythere := f.formal[name]
