@@ -1,6 +1,7 @@
 #### 简介
 flag库是标准库的增强版本,让你的命令行程序飞起来
 
+[![Build Status](https://travis-ci.org/guonaihong/flag.png)](https://travis-ci.org/guonaihong/flag)
 #### 演示
 ![flag](./flag.gif)
 ### 功能

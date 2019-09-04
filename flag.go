@@ -1114,7 +1114,9 @@ func (f *FlagSet) Parse(arguments []string) error {
 	f.parsed = true
 	f.args = arguments
 
-	defer func() { f.args = append(f.unkownArgs, f.args...) }()
+	defer func() {
+		f.args = append(f.unkownArgs, f.args...)
+	}()
 
 	for {
 		seen, err := f.parseOne()

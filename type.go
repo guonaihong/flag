@@ -61,7 +61,7 @@ func newIntValue(val int, p *int) *intValue {
 }
 
 func (i *intValue) Set(s string) error {
-	v, err := strconv.ParseInt(s, 10, 8)
+	v, err := strconv.ParseInt(s, 10, 32)
 	*i = intValue(v)
 	return err
 }
